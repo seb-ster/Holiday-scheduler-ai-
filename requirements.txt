@@ -1,0 +1,4 @@
+pytest
+prometheus_client
+flask
+requests
