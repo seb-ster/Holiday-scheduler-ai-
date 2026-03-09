@@ -1,6 +1,5 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:anim="clr-namespace:Avalonia.Animation;assembly=Avalonia.Base"
         x:Class="HolidayScheduler.Gui.MainWindow"
         Title="Holiday Scheduler Demonstrator"
         Width="1180"
@@ -9,73 +8,65 @@
         MinHeight="620">
   <Grid RowDefinitions="Auto,*" Margin="24">
     <Border Classes="card" Padding="18,14" Margin="0,0,0,16">
-      <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+      <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
         <StackPanel Spacing="2">
           <TextBlock Text="Yearly Roster" Classes="headline" />
-          <TextBlock x:Name="YearLabel" Opacity="0.72" />
-        </StackPanel>
-
-        <TextBlock Grid.Column="1" x:Name="PageIndicator"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   FontWeight="SemiBold" />
-
-        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
-          <Button x:Name="PreviousPageButton" Classes="tonal" Content="Previous" Click="OnPreviousPage" />
-          <Button x:Name="NextPageButton" Classes="filled" Content="Next" Click="OnNextPage" />
+          <TextBlock x:Name="YearLabel" Opacity="0.72" Text="Roster year" />
         </StackPanel>
       </Grid>
     </Border>
 
     <Border Grid.Row="1" Classes="card" Padding="0" ClipToBounds="True">
-      <Carousel x:Name="RosterCarousel">
-        <Carousel.PageTransition>
-          <anim:PageSlide Duration="0:0:0.30" Orientation="Horizontal" />
-        </Carousel.PageTransition>
-
-        <Carousel.ItemTemplate>
+      <TabControl x:Name="YearTabs" SelectionChanged="OnYearTabChanged" Margin="12">
+        <TabControl.ItemTemplate>
           <DataTemplate>
-            <Grid RowDefinitions="Auto,*" Margin="16">
-              <Grid ColumnDefinitions="80,*,*,*,*" Margin="0,0,0,8">
+            <TextBlock Text="{Binding Year}" FontWeight="SemiBold" Margin="4,0" />
+          </DataTemplate>
+        </TabControl.ItemTemplate>
+
+        <TabControl.ContentTemplate>
+          <DataTemplate>
+            <Grid RowDefinitions="Auto,*" Margin="4">
+              <Grid ColumnDefinitions="80,*,*,*,*,*,*,*,*,*,*,*,*" Margin="0,0,0,8">
                 <Border Grid.Column="0" Background="{DynamicResource SurfaceMutedBrush}" Padding="8" CornerRadius="8" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1">
-                  <TextBlock Text="Day" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                  <TextBlock Text="DATE" FontWeight="SemiBold" HorizontalAlignment="Center" />
                 </Border>
 
-                <Border Grid.Column="1" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0">
-                  <TextBlock Text="{Binding Month1Name}" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#00201F" />
-                </Border>
-                <Border Grid.Column="2" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0">
-                  <TextBlock Text="{Binding Month2Name}" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#00201F" />
-                </Border>
-                <Border Grid.Column="3" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0">
-                  <TextBlock Text="{Binding Month3Name}" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#00201F" />
-                </Border>
-                <Border Grid.Column="4" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0">
-                  <TextBlock Text="{Binding Month4Name}" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#00201F" />
-                </Border>
+                <Border Grid.Column="1" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month1Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="2" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month2Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="3" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month3Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="4" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month4Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="5" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month5Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="6" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month6Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="7" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month7Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="8" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month8Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="9" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month9Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="10" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month10Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="11" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month11Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
+                <Border Grid.Column="12" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0"><TextBlock Text="{Binding Month12Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
               </Grid>
 
               <ScrollViewer Grid.Row="1">
                 <ItemsControl ItemsSource="{Binding Rows}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                      <Grid ColumnDefinitions="80,*,*,*,*" Margin="0,0,0,6">
+                      <Grid ColumnDefinitions="80,*,*,*,*,*,*,*,*,*,*,*,*" Margin="0,0,0,6">
                         <Border Grid.Column="0" Background="{DynamicResource SurfaceMutedBrush}" Padding="8" CornerRadius="8" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1">
                           <TextBlock Text="{Binding DayLabel}" HorizontalAlignment="Center" />
                         </Border>
 
-                        <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1">
-                          <TextBlock Text="{Binding Month1Status}" HorizontalAlignment="Center" FontSize="12" />
-                        </Border>
-                        <Border Grid.Column="2" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1">
-                          <TextBlock Text="{Binding Month2Status}" HorizontalAlignment="Center" FontSize="12" />
-                        </Border>
-                        <Border Grid.Column="3" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1">
-                          <TextBlock Text="{Binding Month3Status}" HorizontalAlignment="Center" FontSize="12" />
-                        </Border>
-                        <Border Grid.Column="4" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1">
-                          <TextBlock Text="{Binding Month4Status}" HorizontalAlignment="Center" FontSize="12" />
-                        </Border>
+                        <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month1Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="2" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month2Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="3" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month3Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="4" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month4Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="5" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month5Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="6" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month6Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="7" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month7Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="8" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month8Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="9" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month9Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="10" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month10Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="11" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month11Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
+                        <Border Grid.Column="12" Background="{DynamicResource SurfaceBrush}" Padding="8" CornerRadius="8" Margin="8,0,0,0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1"><TextBlock Text="{Binding Month12Status}" HorizontalAlignment="Center" FontSize="12"/></Border>
                       </Grid>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
@@ -83,8 +74,8 @@
               </ScrollViewer>
             </Grid>
           </DataTemplate>
-        </Carousel.ItemTemplate>
-      </Carousel>
+        </TabControl.ContentTemplate>
+      </TabControl>
     </Border>
   </Grid>
 </Window>

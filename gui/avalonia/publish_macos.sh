@@ -9,7 +9,7 @@ OUTPUT_DIR="$PROJECT_DIR/../../dist/macos-arm64"
 
 mkdir -p "$OUTPUT_DIR"
 
-dotnet publish "$PROJECT_DIR/HolidayScheduler.Gui.csproj" \
+dotnet publish "$PROJECT_DIR/HolidayScheduler.Gui.fsproj" \
   -c Release \
   -r osx-arm64 \
   --self-contained true \
