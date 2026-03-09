@@ -1,0 +1,157 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="HolidayScheduler.MainWindow"
+        Title="Holiday Scheduler AI"
+        Width="1024" Height="700"
+        MinWidth="800" MinHeight="500">
+
+  <!-- Native menu bar (macOS app menu via attached property) -->
+  <NativeMenu.Menu>
+    <NativeMenu>
+      <NativeMenuItem Header="File">
+        <NativeMenuItem.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="New Schedule" />
+            <NativeMenuItemSeparator />
+            <NativeMenuItem Header="Exit" />
+          </NativeMenu>
+        </NativeMenuItem.Menu>
+      </NativeMenuItem>
+      <NativeMenuItem Header="Edit">
+        <NativeMenuItem.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="Add Request" />
+            <NativeMenuItem Header="Run Evolution" />
+          </NativeMenu>
+        </NativeMenuItem.Menu>
+      </NativeMenuItem>
+    </NativeMenu>
+  </NativeMenu.Menu>
+
+  <DockPanel>
+
+    <!-- ── Visual Menu Bar (cross-platform, inside window) ───────── -->
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="_New Schedule"  x:Name="MenuFileNew" />
+        <Separator />
+        <MenuItem Header="E_xit"          x:Name="MenuFileExit" />
+      </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="_Add Request"   x:Name="MenuEditAdd" />
+        <MenuItem Header="Run _Evolution" x:Name="MenuEditEvolve" />
+      </MenuItem>
+      <MenuItem Header="_View">
+        <MenuItem Header="_Roster"        x:Name="MenuViewRoster" />
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="_About"         x:Name="MenuHelpAbout" />
+        <MenuItem Header="_Log Statistics" x:Name="MenuHelpLogs" />
+      </MenuItem>
+    </Menu>
+
+    <!-- ── Sidebar ───────────────────────────────────────────────── -->
+    <Border DockPanel.Dock="Left"
+            Width="220"
+            Background="#F0F0F0"
+            BorderBrush="#CCCCCC"
+            BorderThickness="0,0,1,0"
+            Padding="10">
+      <StackPanel Spacing="12">
+        <TextBlock Text="Agent Status" FontWeight="Bold" FontSize="14" />
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="Generation" FontWeight="SemiBold" />
+          <TextBlock x:Name="SidebarGeneration" Text="1" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="Population" FontWeight="SemiBold" />
+          <TextBlock x:Name="SidebarPopulation" Text="0 agents" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="Best Reward" FontWeight="SemiBold" />
+          <TextBlock x:Name="SidebarBestReward" Text="0.00" />
+        </StackPanel>
+
+        <Separator />
+
+        <TextBlock Text="Queue Status" FontWeight="Bold" FontSize="14" />
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="Pending Requests" FontWeight="SemiBold" />
+          <TextBlock x:Name="SidebarQueueCount" Text="0" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="Scheduled" FontWeight="SemiBold" />
+          <TextBlock x:Name="SidebarScheduled" Text="0" />
+        </StackPanel>
+
+        <Separator />
+
+        <Button x:Name="BtnRunEvolution"
+                Content="Run Evolution"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center" />
+
+        <Button x:Name="BtnAddSample"
+                Content="Add Sample Request"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center" />
+      </StackPanel>
+    </Border>
+
+    <!-- ── Status bar ────────────────────────────────────────────── -->
+    <Border DockPanel.Dock="Bottom"
+            Background="#E8E8E8"
+            BorderBrush="#CCCCCC"
+            BorderThickness="0,1,0,0"
+            Padding="6,3">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock x:Name="StatusLogPath"
+                   Grid.Column="0"
+                   Text="Log: —"
+                   VerticalAlignment="Center"
+                   FontSize="11"
+                   Foreground="#555555" />
+        <TextBlock x:Name="StatusAgentInfo"
+                   Grid.Column="1"
+                   Text="Agents: 0 | Gen: 0"
+                   VerticalAlignment="Center"
+                   FontSize="11"
+                   Foreground="#555555" />
+      </Grid>
+    </Border>
+
+    <!-- ── Main content: Roster DataGrid ─────────────────────────── -->
+    <Grid RowDefinitions="Auto,*" Margin="10">
+
+      <TextBlock Grid.Row="0"
+                 Text="Holiday Roster"
+                 FontSize="18"
+                 FontWeight="Bold"
+                 Margin="0,0,0,8" />
+
+      <DataGrid x:Name="RosterGrid"
+                Grid.Row="1"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                GridLinesVisibility="Horizontal"
+                CanUserResizeColumns="True"
+                CanUserSortColumns="True">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Employee"   Binding="{Binding EmployeeId}" Width="140" />
+          <DataGridTextColumn Header="Start Date" Binding="{Binding StartDate}"  Width="110" />
+          <DataGridTextColumn Header="End Date"   Binding="{Binding EndDate}"    Width="110" />
+          <DataGridTextColumn Header="Priority"   Binding="{Binding Priority}"   Width="80" />
+          <DataGridTextColumn Header="Reward"     Binding="{Binding Reward}"     Width="90" />
+          <DataGridTextColumn Header="Placed At"  Binding="{Binding PlacedAt}"   Width="170" />
+        </DataGrid.Columns>
+      </DataGrid>
+
+    </Grid>
+
+  </DockPanel>
+</Window>

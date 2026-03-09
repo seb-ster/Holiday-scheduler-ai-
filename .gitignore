@@ -1,0 +1,25 @@
+# Build outputs
+bin/
+obj/
+releases/
+
+# Python build artifacts
+__pycache__/
+*.pyc
+*.pyo
+dist/
+build/
+*.spec
+
+# IDE files
+.idea/
+.vscode/
+*.suo
+*.user
+
+# macOS
+.DS_Store
+
+# NuGet
+*.nupkg
+packages/
