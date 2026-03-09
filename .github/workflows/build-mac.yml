@@ -1,0 +1,118 @@
+name: Build for macOS
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to create GitHub Releases
+
+jobs:
+  build-mac:
+    name: Build macOS binaries
+    runs-on: macos-latest
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+      # ── 1. Checkout ─────────────────────────────────────────────────────────
+      - name: "⬇️  Checkout repository"
+        uses: actions/checkout@v4
+
+      # ── 2. .NET setup ────────────────────────────────────────────────────────
+      - name: "🔧  Set up .NET 8"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # ── 3. Restore packages ──────────────────────────────────────────────────
+      - name: "📦  Restore NuGet packages"
+        run: |
+          echo "::group::dotnet restore output"
+          dotnet restore HolidaySchedulerApp.fsproj
+          echo "::endgroup::"
+
+      # ── 4. Build – Apple Silicon (arm64) ─────────────────────────────────────
+      - name: "🍎  Build → osx-arm64 (Apple Silicon)"
+        run: |
+          echo "::group::dotnet publish osx-arm64"
+          dotnet publish HolidaySchedulerApp.fsproj \
+            --configuration Release \
+            --runtime osx-arm64 \
+            --self-contained true \
+            --output releases/osx-arm64 \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=false \
+            -p:IncludeNativeLibrariesForSelfExtract=true
+          echo "::endgroup::"
+
+      # ── 5. Build – Intel x64 ─────────────────────────────────────────────────
+      - name: "💻  Build → osx-x64 (Intel Mac)"
+        run: |
+          echo "::group::dotnet publish osx-x64"
+          dotnet publish HolidaySchedulerApp.fsproj \
+            --configuration Release \
+            --runtime osx-x64 \
+            --self-contained true \
+            --output releases/osx-x64 \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=false \
+            -p:IncludeNativeLibrariesForSelfExtract=true
+          echo "::endgroup::"
+
+      # ── 6. Package artifacts ─────────────────────────────────────────────────
+      - name: "🗜️  Zip release artifacts"
+        run: |
+          cd releases
+          zip -r ../HolidaySchedulerApp-osx-arm64.zip osx-arm64/
+          zip -r ../HolidaySchedulerApp-osx-x64.zip   osx-x64/
+          cd ..
+          echo "Built artifacts:"
+          ls -lh HolidaySchedulerApp-osx-*.zip
+
+      # ── 7. Determine release tag ─────────────────────────────────────────────
+      - name: "🏷️  Compute release tag"
+        id: tag
+        run: |
+          TAG="mac-build-$(date -u +'%Y%m%d-%H%M%S')"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      # ── 8. Create GitHub Release ─────────────────────────────────────────────
+      - name: "🚀  Create GitHub Release"
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "macOS Build – ${{ steps.tag.outputs.tag }}"
+          body: |
+            ## Holiday Scheduler AI – macOS Release
+
+            Automatically built from commit `${{ github.sha }}` on branch `${{ github.ref_name }}`.
+
+            | Asset | Target |
+            |---|---|
+            | `HolidaySchedulerApp-osx-arm64.zip` | Apple Silicon (M1/M2/M3) |
+            | `HolidaySchedulerApp-osx-x64.zip`   | Intel Mac |
+
+            **Usage:** unzip the archive for your Mac type, then run the `HolidaySchedulerApp` executable.
+          files: |
+            HolidaySchedulerApp-osx-arm64.zip
+            HolidaySchedulerApp-osx-x64.zip
+          draft: false
+          prerelease: false
+
+      # ── 9. Print release link in job summary ─────────────────────────────────
+      - name: "🔗  Release link"
+        run: |
+          echo "## ✅ macOS Build Complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| | |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Release** | [${{ steps.tag.outputs.tag }}](${{ steps.release.outputs.url }}) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Commit**  | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Branch**  | \`${{ github.ref_name }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Download the release here → ${{ steps.release.outputs.url }}**" >> "$GITHUB_STEP_SUMMARY"
