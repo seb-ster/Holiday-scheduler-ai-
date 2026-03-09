@@ -3,6 +3,7 @@ namespace HolidayScheduler.Gui
 open Avalonia.Controls
 open Avalonia.Controls.Primitives
 open Avalonia.Markup.Xaml
+open Avalonia.Media
 open System
 open System.Collections.ObjectModel
 open System.Globalization
@@ -38,6 +39,10 @@ type YearRosterView() =
     member val Month12Name = "" with get, set
     member val Rows = ResizeArray<RosterDayRow>() with get
 
+type StatusTone =
+    | Positive
+    | Negative
+
 type MainWindow() as this =
     inherit Window()
 
@@ -49,6 +54,11 @@ type MainWindow() as this =
     let mutable yearLabel: TextBlock option = None
     let mutable yearTabStrip: TabStrip option = None
     let mutable yearContent: ContentControl option = None
+    let mutable statusBar: Border option = None
+    let mutable statusMessage: TextBlock option = None
+    let mutable statusCountdown: TextBlock option = None
+    let mutable statusCountdownValue = 5
+    let mutable statusTimer: Avalonia.Threading.DispatcherTimer option = None
 
     let monthName month =
         CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames[month - 1]
@@ -95,6 +105,9 @@ type MainWindow() as this =
         yearLabel <- Some(this.FindControl<TextBlock>("YearLabel"))
         yearTabStrip <- Some(this.FindControl<TabStrip>("YearTabStrip"))
         yearContent <- Some(this.FindControl<ContentControl>("YearContent"))
+        statusBar <- Some(this.FindControl<Border>("StatusBar"))
+        statusMessage <- Some(this.FindControl<TextBlock>("StatusMessage"))
+        statusCountdown <- Some(this.FindControl<TextBlock>("StatusCountdown"))
 
     let yearTab0 = this.FindControl<TabStripItem>("YearTab0")
     let yearTab1 = this.FindControl<TabStripItem>("YearTab1")
@@ -106,6 +119,26 @@ type MainWindow() as this =
     let updateYearLabel selectedYear =
         match yearLabel with
         | Some label -> label.Text <- $"Roster year {selectedYear}"
+        | None -> ()
+
+    let setStatusTone tone =
+        let backgroundHex, foregroundHex =
+            match tone with
+            | Positive -> "#DCFCE7", "#166534"
+            | Negative -> "#FEE2E2", "#991B1B"
+
+        match statusBar with
+        | Some bar -> bar.Background <- SolidColorBrush(Color.Parse(backgroundHex))
+        | None -> ()
+
+        let foregroundBrush = SolidColorBrush(Color.Parse(foregroundHex))
+
+        match statusMessage with
+        | Some msg -> msg.Foreground <- foregroundBrush
+        | None -> ()
+
+        match statusCountdown with
+        | Some countdown -> countdown.Foreground <- foregroundBrush
         | None -> ()
 
     let selectYear index =
@@ -125,6 +158,56 @@ type MainWindow() as this =
                 updateYearLabel years[index].Year
             finally
                 isSelecting <- false
+
+    let hideStatus () =
+        match statusTimer with
+        | Some timer ->
+            timer.Stop()
+        | None -> ()
+
+        statusTimer <- None
+
+        match statusBar with
+        | Some bar -> bar.IsVisible <- false
+        | None -> ()
+
+    let showStatus message tone =
+        setStatusTone tone
+
+        match statusMessage with
+        | Some msg -> msg.Text <- message
+        | None -> ()
+
+        statusCountdownValue <- 5
+
+        match statusCountdown with
+        | Some countdown -> countdown.Text <- statusCountdownValue.ToString()
+        | None -> ()
+
+        match statusBar with
+        | Some bar -> bar.IsVisible <- true
+        | None -> ()
+
+        // Stop existing timer if any
+        match statusTimer with
+        | Some timer -> timer.Stop()
+        | None -> ()
+
+        // Create new countdown timer
+        let timer = Avalonia.Threading.DispatcherTimer()
+        timer.Interval <- TimeSpan.FromSeconds(1.0)
+        timer.Tick.Add(fun _ ->
+            statusCountdownValue <- statusCountdownValue - 1
+
+            match statusCountdown with
+            | Some countdown -> countdown.Text <- statusCountdownValue.ToString()
+            | None -> ()
+
+            if statusCountdownValue <= 0 then
+                hideStatus())
+
+        statusTimer <- Some timer
+        timer.Start()
 
     let buildYearTabs () =
         years.Clear()
@@ -154,3 +237,18 @@ type MainWindow() as this =
 
         selectYear selectedIndex
         isInitialized <- true
+
+        // Wire up status bar close button
+        let closeButton = this.FindControl<Border>("StatusCloseButton")
+        if not (isNull closeButton) then
+            closeButton.PointerPressed.Add(fun _ -> hideStatus())
+
+        // Wire up roster list selection to show status
+        let rosterListBox = this.FindControl<ListBox>("RosterListBox")
+        if not (isNull rosterListBox) then
+            rosterListBox.SelectionChanged.Add(fun _ ->
+                match rosterListBox.SelectedItem with
+                | :? RosterDayRow as row ->
+                    showStatus $"Day {row.DayLabel} selected" Positive
+                | _ ->
+                    showStatus "No day selected" Negative)
