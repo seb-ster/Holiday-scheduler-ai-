@@ -1,0 +1,6 @@
+.venv-build/
+dist/
+*.app
+*.dmg
+bin/
+obj/

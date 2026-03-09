@@ -10,6 +10,14 @@ try:
 except Exception:
     telemetry_available = False
 
+try:
+    # optional UI notifier; use non-blocking notify to avoid blocking agent threads
+    from ..ui_notifier import default_notifier as ui_notifier
+    ui_notifier_available = True
+except Exception:
+    ui_notifier = None
+    ui_notifier_available = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +72,17 @@ class ThreadAgent(BaseAgent):
                 self.last_run_time = float(duration)
                 self.run_count = int(st["run_count"])
                 self.total_time = float(st["total_time"])
+                # publish a tiny non-blocking UI event
+                try:
+                    if ui_notifier_available:
+                        event = {"name": self.name, "last_run": float(duration), "run_count": self.run_count}
+                        # notify under a per-agent key; drop silently if queue is full
+                        try:
+                            ui_notifier.notify(self.name, event)
+                        except Exception:
+                            pass
+                except Exception:
+                    logger.debug("UI notifier not available for agent %s", self.name)
                 # record telemetry if available
                 try:
                     if telemetry_available:
