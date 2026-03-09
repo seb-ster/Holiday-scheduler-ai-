@@ -30,6 +30,7 @@ type MainWindow() as this =
           Schedule = []
           Blocked  = Set.empty
           Capacity = 3 }
+    let mutable isEvolutionRunning = false
 
     let log = Logger.instance ()
 
@@ -95,19 +96,53 @@ type MainWindow() as this =
         this.RefreshUI()
 
     member private this.OnRunEvolution() =
+        // Prevent re-entry (the buttons are also disabled, but this guards
+        // any programmatic call path that bypasses the UI controls)
+        if isEvolutionRunning then () else
+
+        let btnEvolve  = this.FindControl<Button>("BtnRunEvolution")
+        let menuEvolve = this.FindControl<MenuItem>("MenuEditEvolve")
+
+        let setControlsEnabled enabled =
+            if btnEvolve  <> null then btnEvolve.IsEnabled  <- enabled
+            if menuEvolve <> null then menuEvolve.IsEnabled <- enabled
+
+        // Disable controls for the duration of the background computation
+        isEvolutionRunning <- true
+        setControlsEnabled false
+
+        // Snapshot mutable state so the background thread has its own copy
+        let capturedPop   = population
+        let capturedState = state
+        let capturedGen   = generation
+
         log.Info (sprintf "Starting evolution – generation %d, population %d, queue %d"
-                      generation (List.length population) (List.length state.Queue))
+                      capturedGen (List.length capturedPop) (List.length capturedState.Queue))
 
-        let (newPop, newState) =
-            evolveGeneration population state 3 (List.length population) generation
+        async {
+            do! Async.SwitchToThreadPool()
+            try
+                let (newPop, newState) =
+                    evolveGeneration capturedPop capturedState 3 (List.length capturedPop) capturedGen
 
-        population <- newPop
-        state      <- newState
-        generation <- generation + 1
-
-        log.Info (sprintf "Evolution complete – generation %d, scheduled %d"
-                      generation (List.length state.Schedule))
-        this.RefreshUI()
+                Dispatcher.UIThread.Post(fun () ->
+                    population <- newPop
+                    state      <- newState
+                    generation <- capturedGen + 1
+                    isEvolutionRunning <- false
+                    setControlsEnabled true
+                    log.Info (sprintf "Evolution complete – generation %d, scheduled %d"
+                                  (capturedGen + 1) (List.length newState.Schedule))
+                    this.RefreshUI()
+                )
+            with ex ->
+                log.Error (sprintf "Evolution failed: %s" ex.Message)
+                Dispatcher.UIThread.Post(fun () ->
+                    isEvolutionRunning <- false
+                    setControlsEnabled true
+                )
+        }
+        |> Async.Start
 
     member private this.RefreshUI() =
         Dispatcher.UIThread.Post(fun () ->
