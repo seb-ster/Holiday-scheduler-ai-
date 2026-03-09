@@ -1,0 +1,86 @@
+name: Release – macOS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-mac:
+    name: Build macOS (${{ matrix.rid }})
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        rid: [osx-arm64, osx-x64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore packages
+        run: dotnet restore HolidaySchedulerApp.fsproj
+
+      - name: Publish self-contained executable
+        run: |
+          dotnet publish HolidaySchedulerApp.fsproj \
+            --configuration Release \
+            --runtime ${{ matrix.rid }} \
+            --self-contained true \
+            --output releases/${{ matrix.rid }} \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=false \
+            -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Zip release artefact
+        run: |
+          cd releases/${{ matrix.rid }}
+          zip -r ../../HolidaySchedulerApp-${{ matrix.rid }}.zip .
+
+      - name: Upload artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HolidaySchedulerApp-${{ matrix.rid }}
+          path: HolidaySchedulerApp-${{ matrix.rid }}.zip
+
+  publish-release:
+    name: Create GitHub Release
+    needs: build-mac
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artefacts
+        uses: actions/download-artifact@v4.1.8
+        with:
+          path: dist/
+
+      - name: Create release tag
+        id: tag
+        run: echo "tag=mac-$(date -u +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "macOS Release – ${{ steps.tag.outputs.tag }}"
+          body: |
+            Automated macOS desktop build of Holiday Scheduler AI.
+
+            **Downloads**
+            | File | Architecture |
+            |------|-------------|
+            | `HolidaySchedulerApp-osx-arm64.zip` | Apple Silicon (M1/M2/M3) |
+            | `HolidaySchedulerApp-osx-x64.zip`   | Intel Mac               |
+
+            Extract the zip and run the `HolidaySchedulerApp` executable inside.
+          files: dist/**/*.zip
