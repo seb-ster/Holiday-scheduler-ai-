@@ -25,13 +25,14 @@ dotnet restore HolidaySchedulerApp.fsproj
 # Build and publish as a self-contained single-file executable
 echo ""
 echo "── Publishing ──────────────────────────────────────────────────────────"
+# Trimming disabled: Avalonia + F# reflection require untrimmed assemblies
 dotnet publish HolidaySchedulerApp.fsproj \
     --configuration "$CONFIGURATION" \
     --runtime "$TARGET_RID" \
     --self-contained true \
     --output "$OUTPUT_DIR/$TARGET_RID" \
     -p:PublishSingleFile=true \
-    -p:PublishTrimmed=false \   # Trimming disabled: Avalonia + F# reflection require untrimmed assemblies
+    -p:PublishTrimmed=false \
     -p:IncludeNativeLibrariesForSelfExtract=true
 
 echo ""
