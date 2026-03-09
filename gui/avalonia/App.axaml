@@ -9,7 +9,7 @@
     <Color x:Key="BackgroundColor">#F5F5F7</Color>
     <Color x:Key="SurfaceColor">#FFFFFF</Color>
     <Color x:Key="SurfaceMutedColor">#F2F2F4</Color>
-    <Color x:Key="OutlineColor">#D2D2D7</Color>
+    <Color x:Key="OutlineColor">#B8B8B8</Color>
 
     <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource PrimaryColor}" />
     <SolidColorBrush x:Key="PrimaryContainerBrush" Color="{DynamicResource PrimaryContainerColor}" />

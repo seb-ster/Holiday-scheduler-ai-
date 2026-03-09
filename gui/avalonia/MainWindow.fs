@@ -1,6 +1,7 @@
 namespace HolidayScheduler.Gui
 
 open Avalonia.Controls
+open Avalonia.Controls.Primitives
 open Avalonia.Markup.Xaml
 open System
 open System.Collections.ObjectModel
@@ -42,6 +43,12 @@ type MainWindow() as this =
 
     let currentYear = DateTime.Now.Year
     let years = ObservableCollection<YearRosterView>()
+    let mutable selectedIndex = 2
+    let mutable isSelecting = false
+    let mutable isInitialized = false
+    let mutable yearLabel: TextBlock option = None
+    let mutable yearTabStrip: TabStrip option = None
+    let mutable yearContent: ContentControl option = None
 
     let monthName month =
         CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames[month - 1]
@@ -82,9 +89,42 @@ type MainWindow() as this =
             row.Month12Status <- statusForDay year 12 day
             view.Rows.Add(row)
 
+    do AvaloniaXamlLoader.Load(this)
+
+    do
+        yearLabel <- Some(this.FindControl<TextBlock>("YearLabel"))
+        yearTabStrip <- Some(this.FindControl<TabStrip>("YearTabStrip"))
+        yearContent <- Some(this.FindControl<ContentControl>("YearContent"))
+
+    let yearTab0 = this.FindControl<TabStripItem>("YearTab0")
+    let yearTab1 = this.FindControl<TabStripItem>("YearTab1")
+    let yearTab2 = this.FindControl<TabStripItem>("YearTab2")
+    let yearTab3 = this.FindControl<TabStripItem>("YearTab3")
+    let yearTab4 = this.FindControl<TabStripItem>("YearTab4")
+    let yearTabs = [| yearTab0; yearTab1; yearTab2; yearTab3; yearTab4 |]
+
     let updateYearLabel selectedYear =
-        let label = this.FindControl<TextBlock>("YearLabel")
-        label.Text <- $"Roster year {selectedYear}"
+        match yearLabel with
+        | Some label -> label.Text <- $"Roster year {selectedYear}"
+        | None -> ()
+
+    let selectYear index =
+        if not isSelecting then
+            isSelecting <- true
+
+            try
+                selectedIndex <- index
+                match yearTabStrip with
+                | Some tabStrip -> tabStrip.SelectedIndex <- index
+                | None -> ()
+
+                match yearContent with
+                | Some content -> content.Content <- years[index]
+                | None -> ()
+
+                updateYearLabel years[index].Year
+            finally
+                isSelecting <- false
 
     let buildYearTabs () =
         years.Clear()
@@ -97,20 +137,20 @@ type MainWindow() as this =
             years.Add(view)
 
     do
-        AvaloniaXamlLoader.Load(this)
-
-        let yearTabs = this.FindControl<TabControl>("YearTabs")
-        yearTabs.ItemsSource <- years
-
         buildYearTabs ()
 
-        let selectedIndex = 2
-        yearTabs.SelectedIndex <- selectedIndex
-        updateYearLabel years[selectedIndex].Year
+        for i in 0 .. yearTabs.Length - 1 do
+            yearTabs[i].Content <- years[i].Year.ToString(CultureInfo.InvariantCulture)
 
-    member this.OnYearTabChanged(_sender: obj, _e: SelectionChangedEventArgs) =
-        let yearTabs = this.FindControl<TabControl>("YearTabs")
+        match yearTabStrip with
+        | Some tabStrip ->
+            tabStrip.SelectionChanged.Add(fun _ ->
+                if isInitialized && not isSelecting then
+                    let index = tabStrip.SelectedIndex
 
-        match yearTabs.SelectedItem with
-        | :? YearRosterView as selected -> updateYearLabel selected.Year
-        | _ -> ()
+                    if index >= 0 && index < years.Count && index <> selectedIndex then
+                        selectYear index)
+        | None -> ()
+
+        selectYear selectedIndex
+        isInitialized <- true
