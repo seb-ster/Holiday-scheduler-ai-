@@ -13,6 +13,8 @@
           <NativeMenu>
             <NativeMenuItem Header="New Schedule" />
             <NativeMenuItemSeparator />
+            <NativeMenuItem Header="Export Schedule…" />
+            <NativeMenuItemSeparator />
             <NativeMenuItem Header="Exit" />
           </NativeMenu>
         </NativeMenuItem.Menu>
@@ -21,6 +23,9 @@
         <NativeMenuItem.Menu>
           <NativeMenu>
             <NativeMenuItem Header="Add Request" />
+            <NativeMenuItem Header="Add 10 Requests" />
+            <NativeMenuItem Header="Clear Queue" />
+            <NativeMenuItemSeparator />
             <NativeMenuItem Header="Run Evolution" />
           </NativeMenu>
         </NativeMenuItem.Menu>
@@ -33,20 +38,25 @@
     <!-- ── Visual Menu Bar (cross-platform, inside window) ───────── -->
     <Menu DockPanel.Dock="Top">
       <MenuItem Header="_File">
-        <MenuItem Header="_New Schedule"  x:Name="MenuFileNew" />
+        <MenuItem Header="_New Schedule"       x:Name="MenuFileNew" />
         <Separator />
-        <MenuItem Header="E_xit"          x:Name="MenuFileExit" />
+        <MenuItem Header="_Export Schedule…"   x:Name="MenuFileExport" />
+        <Separator />
+        <MenuItem Header="E_xit"               x:Name="MenuFileExit" />
       </MenuItem>
       <MenuItem Header="_Edit">
-        <MenuItem Header="_Add Request"   x:Name="MenuEditAdd" />
-        <MenuItem Header="Run _Evolution" x:Name="MenuEditEvolve" />
+        <MenuItem Header="_Add Request"        x:Name="MenuEditAdd" />
+        <MenuItem Header="Add _10 Requests"    x:Name="MenuEditAddBulk" />
+        <MenuItem Header="_Clear Queue"        x:Name="MenuEditClear" />
+        <Separator />
+        <MenuItem Header="Run _Evolution"      x:Name="MenuEditEvolve" />
       </MenuItem>
       <MenuItem Header="_View">
-        <MenuItem Header="_Roster"        x:Name="MenuViewRoster" />
+        <MenuItem Header="_Roster"             x:Name="MenuViewRoster" />
       </MenuItem>
       <MenuItem Header="_Help">
-        <MenuItem Header="_About"         x:Name="MenuHelpAbout" />
-        <MenuItem Header="_Log Statistics" x:Name="MenuHelpLogs" />
+        <MenuItem Header="_About"              x:Name="MenuHelpAbout" />
+        <MenuItem Header="_Log Statistics"     x:Name="MenuHelpLogs" />
       </MenuItem>
     </Menu>
 
@@ -57,6 +67,7 @@
             BorderBrush="#CCCCCC"
             BorderThickness="0,0,1,0"
             Padding="10">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
       <StackPanel Spacing="12">
         <TextBlock Text="Agent Status" FontWeight="Bold" FontSize="14" />
 
@@ -91,16 +102,39 @@
 
         <Separator />
 
+        <TextBlock Text="Evolution History" FontWeight="Bold" FontSize="14" />
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="Recent Rewards" FontWeight="SemiBold" />
+          <TextBlock x:Name="SidebarHistory"
+                     Text="—"
+                     FontFamily="Courier New, monospace"
+                     FontSize="11" />
+        </StackPanel>
+
+        <Separator />
+
         <Button x:Name="BtnRunEvolution"
-                Content="Run Evolution"
+                Content="▶  Run Evolution"
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Center" />
 
         <Button x:Name="BtnAddSample"
-                Content="Add Sample Request"
+                Content="+ Add Sample Request"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center" />
+
+        <Button x:Name="BtnAddBulk"
+                Content="++ Add 10 Requests"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center" />
+
+        <Button x:Name="BtnClearQueue"
+                Content="✕  Clear Queue"
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Center" />
       </StackPanel>
+      </ScrollViewer>
     </Border>
 
     <!-- ── Status bar ────────────────────────────────────────────── -->
