@@ -100,6 +100,36 @@
                 Content="Add Sample Request"
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Center" />
+
+        <Button x:Name="BtnRunDemo"
+                Content="▶  Run Demo"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                FontWeight="SemiBold" />
+
+        <Separator />
+
+        <TextBlock Text="Top-Agent Genes" FontWeight="Bold" FontSize="14" />
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="Greedy" FontWeight="SemiBold" />
+          <TextBlock x:Name="SidebarGeneGreedy" Text="—" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="Load Balance" FontWeight="SemiBold" />
+          <TextBlock x:Name="SidebarGeneLoad" Text="—" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="Priority" FontWeight="SemiBold" />
+          <TextBlock x:Name="SidebarGenePriority" Text="—" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="Cluster" FontWeight="SemiBold" />
+          <TextBlock x:Name="SidebarGeneCluster" Text="—" />
+        </StackPanel>
       </StackPanel>
     </Border>
 
