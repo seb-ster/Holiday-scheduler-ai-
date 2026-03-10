@@ -14,17 +14,29 @@ open System.Globalization
 type RosterDayRow() =
     member val DayLabel = "" with get, set
     member val Month1Status = "" with get, set
+    member val Month1Translation = "" with get, set
     member val Month2Status = "" with get, set
+    member val Month2Translation = "" with get, set
     member val Month3Status = "" with get, set
+    member val Month3Translation = "" with get, set
     member val Month4Status = "" with get, set
+    member val Month4Translation = "" with get, set
     member val Month5Status = "" with get, set
+    member val Month5Translation = "" with get, set
     member val Month6Status = "" with get, set
+    member val Month6Translation = "" with get, set
     member val Month7Status = "" with get, set
+    member val Month7Translation = "" with get, set
     member val Month8Status = "" with get, set
+    member val Month8Translation = "" with get, set
     member val Month9Status = "" with get, set
+    member val Month9Translation = "" with get, set
     member val Month10Status = "" with get, set
+    member val Month10Translation = "" with get, set
     member val Month11Status = "" with get, set
+    member val Month11Translation = "" with get, set
     member val Month12Status = "" with get, set
+    member val Month12Translation = "" with get, set
 
 type YearRosterView() =
     member val Year = 0 with get, set
@@ -76,6 +88,28 @@ type MainWindow() as this =
         let maxDay = DateTime.DaysInMonth(year, month)
         if day > maxDay then "" else ""
 
+    let translationForStatus status =
+        match status with
+        | "Vacaciones" -> "Deutsch: Urlaub"
+        | "Conge" -> "Deutsch: Urlaub"
+        | "Ferie" -> "Deutsch: Urlaub"
+        | "Riposo" -> "Deutsch: Ruhetag"
+        | _ -> ""
+
+    let sampleForeignStatus year month day =
+        if day > DateTime.DaysInMonth(year, month) then
+            ""
+        else if day % 17 = 0 then
+            "Vacaciones"
+        else if day % 13 = 0 then
+            "Conge"
+        else if day % 11 = 0 then
+            "Ferie"
+        else if day % 7 = 0 then
+            "Riposo"
+        else
+            ""
+
     let fillMonths (view: YearRosterView) =
         view.Month1Name <- monthName 1
         view.Month2Name <- monthName 2
@@ -94,18 +128,30 @@ type MainWindow() as this =
         for day in 1 .. 31 do
             let row = RosterDayRow()
             row.DayLabel <- day.ToString(CultureInfo.InvariantCulture)
-            row.Month1Status <- statusForDay year 1 day
-            row.Month2Status <- statusForDay year 2 day
-            row.Month3Status <- statusForDay year 3 day
-            row.Month4Status <- statusForDay year 4 day
-            row.Month5Status <- statusForDay year 5 day
-            row.Month6Status <- statusForDay year 6 day
-            row.Month7Status <- statusForDay year 7 day
-            row.Month8Status <- statusForDay year 8 day
-            row.Month9Status <- statusForDay year 9 day
-            row.Month10Status <- statusForDay year 10 day
-            row.Month11Status <- statusForDay year 11 day
-            row.Month12Status <- statusForDay year 12 day
+            row.Month1Status <- sampleForeignStatus year 1 day
+            row.Month1Translation <- translationForStatus row.Month1Status
+            row.Month2Status <- sampleForeignStatus year 2 day
+            row.Month2Translation <- translationForStatus row.Month2Status
+            row.Month3Status <- sampleForeignStatus year 3 day
+            row.Month3Translation <- translationForStatus row.Month3Status
+            row.Month4Status <- sampleForeignStatus year 4 day
+            row.Month4Translation <- translationForStatus row.Month4Status
+            row.Month5Status <- sampleForeignStatus year 5 day
+            row.Month5Translation <- translationForStatus row.Month5Status
+            row.Month6Status <- sampleForeignStatus year 6 day
+            row.Month6Translation <- translationForStatus row.Month6Status
+            row.Month7Status <- sampleForeignStatus year 7 day
+            row.Month7Translation <- translationForStatus row.Month7Status
+            row.Month8Status <- sampleForeignStatus year 8 day
+            row.Month8Translation <- translationForStatus row.Month8Status
+            row.Month9Status <- sampleForeignStatus year 9 day
+            row.Month9Translation <- translationForStatus row.Month9Status
+            row.Month10Status <- sampleForeignStatus year 10 day
+            row.Month10Translation <- translationForStatus row.Month10Status
+            row.Month11Status <- sampleForeignStatus year 11 day
+            row.Month11Translation <- translationForStatus row.Month11Status
+            row.Month12Status <- sampleForeignStatus year 12 day
+            row.Month12Translation <- translationForStatus row.Month12Status
             view.Rows.Add(row)
 
     do AvaloniaXamlLoader.Load(this)
@@ -136,9 +182,9 @@ type MainWindow() as this =
     let setStatusTone tone =
         let backgroundHex, foregroundHex, borderHex, progressHex =
             match tone with
-            | Positive -> "#C8E6C9", "#1B5E20", "#81C784", "#A5D6A7"
-            | Negative -> "#FFCDD2", "#B71C1C", "#EF9A9A", "#EF9A9A"
-            | Neutral -> "#FFF9C4", "#7A5A00", "#FFE082", "#FFE082"
+            | Positive -> "#E8F5E9", "#2E7D32", "#A5D6A7", "#C8E6C9"
+            | Negative -> "#FFEBEE", "#B71C1C", "#FFCDD2", "#FFCDD2"
+            | Neutral -> "#FFFDE7", "#F57F17", "#FFF59D", "#FFF59D"
 
         match statusBar with
         | Some bar -> 
@@ -324,6 +370,26 @@ type MainWindow() as this =
         let closeButton = this.FindControl<Border>("StatusCloseButton")
         if not (isNull closeButton) then
             closeButton.PointerPressed.Add(fun _ -> hideStatus())
+
+        // Today quick navigation
+        let todayButton = this.FindControl<Button>("TodayButton")
+        if not (isNull todayButton) then
+            todayButton.Click.Add(fun _ ->
+                let today = DateTime.Today
+                let todayIndex = years |> Seq.tryFindIndex (fun y -> y.Year = today.Year)
+                match todayIndex with
+                | Some index ->
+                    selectYear index
+                    attachRosterSelectionHandler ()
+                    Dispatcher.UIThread.Post((fun () ->
+                        match currentRosterListBox with
+                        | Some lb when today.Day - 1 < lb.ItemCount && today.Day - 1 >= 0 ->
+                            lb.SelectedIndex <- today.Day - 1
+                            lb.ScrollIntoView(lb.SelectedItem)
+                            let todayText = today.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)
+                            showStatus $"Today: {todayText}" Neutral
+                        | _ -> showStatus "Today row unavailable" Negative), DispatcherPriority.Background)
+                | None -> showStatus "Today year not in tabs" Negative)
 
         // Manual status test controls
         let positiveButton = this.FindControl<Button>("StatusPositiveButton")

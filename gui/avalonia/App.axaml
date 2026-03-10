@@ -67,19 +67,20 @@
     </Style>
 
     <Style Selector="TabStripItem">
-      <Setter Property="Padding" Value="12,6" />
-      <Setter Property="Margin" Value="0,0,6,0" />
-      <Setter Property="Foreground" Value="#1D1D1F" />
-      <Setter Property="Background" Value="{DynamicResource SurfaceMutedBrush}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource OutlineBrush}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="10,5" />
+      <Setter Property="Margin" Value="0,0,4,0" />
+        <Setter Property="Foreground" Value="#8E8E93" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="0" />
     </Style>
 
     <Style Selector="TabStripItem:selected">
-      <Setter Property="Background" Value="{DynamicResource PrimaryContainerBrush}" />
-      <Setter Property="Foreground" Value="#0F4EA9" />
+        <Setter Property="Foreground" Value="#1D1D1F" />
+      <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+      <Setter Property="BorderThickness" Value="0,0,0,2" />
     </Style>
 
     <Style Selector="ToggleButton.chip">
