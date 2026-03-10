@@ -45,6 +45,9 @@ type MainWindow() as this =
         if btnEvolve <> null then btnEvolve.Click.Add(fun _ -> this.OnRunEvolution())
         if btnSample <> null then btnSample.Click.Add(fun _ -> this.OnAddSampleRequest())
 
+        let btnDemo  = this.FindControl<Button>("BtnRunDemo")
+        if btnDemo  <> null then btnDemo.Click.Add(fun _ -> this.OnRunDemo())
+
         // Wire up Menu items defined in XAML
         let wireMenuItem (name : string) (handler : unit -> unit) =
             let item = this.FindControl<MenuItem>(name)
@@ -109,19 +112,76 @@ type MainWindow() as this =
                       generation (List.length state.Schedule))
         this.RefreshUI()
 
+    member private this.OnRunDemo() =
+        // Reset to a clean state
+        state      <- { Queue = []; Schedule = []; Blocked = Set.empty; Capacity = 3 }
+        population <- createPopulation 6
+        generation <- 1
+        log.Info "Demo started – resetting and loading sample requests"
+
+        // Seed 15 deterministic-ish holiday requests spread across the next 90 days
+        let rng       = Random(42)
+        let employees = [| "Alice"; "Bob"; "Carol"; "Dave"; "Eve" |]
+        let today     = DateOnly.FromDateTime(DateTime.Today)
+        let requests =
+            [ for i in 0 .. 14 do
+                let startDayOffset = (i * 6) + rng.Next(1, 5)
+                let duration = rng.Next(3, 12)
+                yield
+                    { RequestId   = Guid.NewGuid()
+                      EmployeeId  = employees.[i % employees.Length]
+                      StartDate   = today.AddDays(startDayOffset)
+                      EndDate     = today.AddDays(startDayOffset + duration)
+                      Priority    = (i % 5) + 1
+                      SubmittedAt = DateTime.UtcNow } ]
+        state <- { state with Queue = requests }
+
+        log.Info (sprintf "Demo – loaded %d requests; running 5 evolution cycles" (List.length state.Queue))
+
+        // Run 5 evolution cycles automatically
+        for _ in 1 .. 5 do
+            let (newPop, newState) =
+                evolveGeneration population state 3 (List.length population) generation
+            population <- newPop
+            state      <- newState
+            generation <- generation + 1
+
+        log.Info (sprintf "Demo complete – generation %d, scheduled %d, best reward %.2f"
+                      generation
+                      (List.length state.Schedule)
+                      (population
+                       |> List.map (fun a -> a.Metrics.AverageReward)
+                       |> (fun rs -> if List.isEmpty rs then 0.0 else List.max rs)))
+        this.RefreshUI()
+
     member private this.RefreshUI() =
         Dispatcher.UIThread.Post(fun () ->
             // Update sidebar
             this.SetText "SidebarGeneration"  (string generation)
             this.SetText "SidebarPopulation"  (sprintf "%d agents" (List.length population))
 
-            let bestReward =
+            let bestAgent =
                 population
-                |> List.map (fun a -> a.Metrics.AverageReward)
-                |> (fun rs -> if List.isEmpty rs then 0.0 else List.max rs)
+                |> List.sortByDescending (fun a -> a.Metrics.AverageReward)
+                |> List.tryHead
+
+            let bestReward =
+                bestAgent
+                |> Option.map (fun a -> a.Metrics.AverageReward)
+                |> Option.defaultValue 0.0
             this.SetText "SidebarBestReward"  (sprintf "%.2f" bestReward)
             this.SetText "SidebarQueueCount"  (string (List.length state.Queue))
             this.SetText "SidebarScheduled"   (string (List.length state.Schedule))
+
+            // Update gene weights for the top agent
+            match bestAgent with
+            | None -> ()
+            | Some a ->
+                let g = a.Genes
+                this.SetText "SidebarGeneGreedy"   (sprintf "%.3f" g.GreedyWeight)
+                this.SetText "SidebarGeneLoad"     (sprintf "%.3f" g.LoadBalanceWeight)
+                this.SetText "SidebarGenePriority" (sprintf "%.3f" g.PriorityWeight)
+                this.SetText "SidebarGeneCluster"  (sprintf "%.3f" g.ClusterWeight)
 
             // Update status bar
             this.UpdateStatus
