@@ -8,34 +8,40 @@
         MinHeight="620">
   <Grid RowDefinitions="Auto,Auto,*" Margin="24">
     <!-- Status Bar -->
-    <Border Grid.Row="0" x:Name="StatusBar" Background="#DCFCE7" Padding="12,10" CornerRadius="8" Margin="0,0,0,12" IsVisible="False">
-      <Grid ColumnDefinitions="*,Auto,Auto">
+    <Border Grid.Row="0" x:Name="StatusBar" Background="#FFF9C4" BorderBrush="#FFE082" BorderThickness="1" CornerRadius="8" Padding="0" Height="40" Margin="0,0,0,12" IsVisible="False">
+      <Grid ColumnDefinitions="*,Auto,Auto" Margin="12,0">
         <!-- Status Message -->
-        <TextBlock Grid.Column="0" x:Name="StatusMessage" Text="Row pinned" Foreground="#166534" FontWeight="Medium" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="0" x:Name="StatusMessage" Text="Row pinned" Foreground="#7A5A00" FontWeight="Medium" VerticalAlignment="Center" />
 
         <!-- Countdown Timer -->
-        <TextBlock Grid.Column="1" x:Name="StatusCountdown" Text="5" Foreground="#166534" Opacity="0.8" FontSize="13" VerticalAlignment="Center" Margin="0,0,16,0" />
+        <TextBlock Grid.Column="1" x:Name="StatusCountdown" Text="2" Foreground="#7A5A00" Opacity="0.75" FontSize="13" VerticalAlignment="Center" Margin="0,0,16,0" />
 
-        <!-- Close Button -->
-        <Border Grid.Column="2" x:Name="StatusCloseButton" Background="Transparent" Padding="4" CornerRadius="12" Cursor="Hand" ToolTip.Tip="Close" ToolTip.Placement="Top" ToolTip.VerticalOffset="-5">
-          <Viewbox Width="16" Height="16">
-            <Canvas Width="24" Height="24">
-              <!-- Circle background -->
-              <Ellipse Canvas.Left="4" Canvas.Top="4" Width="16" Height="16" Stroke="#1F2937" StrokeThickness="1.5" Fill="Transparent" Opacity="0.6" />
-              <!-- X mark -->
-              <Line StartPoint="9,9" EndPoint="15,15" Stroke="#1F2937" StrokeThickness="1.5" StrokeLineCap="Round" />
-              <Line StartPoint="15,9" EndPoint="9,15" Stroke="#1F2937" StrokeThickness="1.5" StrokeLineCap="Round" />
+        <!-- Dismiss Button with Progress Fill -->
+        <Border Grid.Column="2" x:Name="StatusCloseButton" Padding="0" Margin="8,4,0,4" CornerRadius="16" Cursor="Hand" ToolTip.Tip="Dismiss (auto-closing)" ToolTip.Placement="Top" ToolTip.VerticalOffset="-5" BorderThickness="1.5" BorderBrush="#FFE082" Background="#FFF9C4" Width="82" Height="32">
+          <Grid>
+            <!-- Progress Fill Background (animates from 0 to full width) -->
+            <Canvas ClipToBounds="True">
+              <Rectangle x:Name="StatusProgressFill" Canvas.Left="0" Canvas.Top="0" Width="0" Height="32" RadiusX="16" RadiusY="16" />
             </Canvas>
-          </Viewbox>
+            
+            <!-- Dismiss Label -->
+            <TextBlock x:Name="StatusCloseLabel" Text="Dismiss" Foreground="#7A5A00" FontSize="13" FontWeight="Medium" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Grid>
         </Border>
       </Grid>
     </Border>
 
     <Border Grid.Row="1" Classes="card" Padding="18,14" Margin="0,0,0,16">
-      <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+      <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
         <StackPanel Spacing="2">
           <TextBlock Text="Yearly Roster" Classes="headline" />
           <TextBlock x:Name="YearLabel" Opacity="0.72" Text="Roster year" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+          <Button x:Name="StatusPositiveButton" Classes="filled" Content="Positive" MinWidth="88" />
+          <Button x:Name="StatusNegativeButton" Classes="tonal" Content="Negative" MinWidth="88" />
+          <Button x:Name="StatusNeutralButton" Classes="tonal" Content="Neutral" MinWidth="88" />
         </StackPanel>
       </Grid>
     </Border>
@@ -54,11 +60,11 @@
           <ContentControl.ContentTemplate>
             <DataTemplate>
               <Grid RowDefinitions="Auto,*" Margin="4">
-              <Grid ColumnDefinitions="32,80,*,*,*,*,*,*,*,*,*,*,*,*" Margin="0,0,0,8">
+              <Grid ColumnDefinitions="40,92,*,*,*,*,*,*,*,*,*,*,*,*" Margin="0,0,0,8">
                 <Border Grid.Column="0" Background="{DynamicResource SurfaceMutedBrush}" Padding="4" CornerRadius="0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1,1,0,1">
                 </Border>
-                <Border Grid.Column="1" Background="{DynamicResource SurfaceMutedBrush}" Padding="8" CornerRadius="0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1,1,0,1">
-                  <TextBlock Text="DATE" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                <Border Grid.Column="1" Background="#E6EDF7" Padding="8" CornerRadius="0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1,1,0,1">
+                  <TextBlock Text="DATE" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0F2A44" />
                 </Border>
 
                 <Border Grid.Column="2" Background="{DynamicResource PrimaryContainerBrush}" Padding="8" CornerRadius="0" Margin="0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1,1,0,1"><TextBlock Text="{Binding Month1Name}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#00201F"/></Border>
@@ -118,24 +124,34 @@
                   <ListBox.ItemTemplate>
                     <DataTemplate>
                       <Border Classes="rowTrack" Background="Transparent">
-                        <Grid ColumnDefinitions="32,80,*,*,*,*,*,*,*,*,*,*,*,*" Margin="0,0,0,0">
-                          <Border Grid.Column="0" Classes="iconCell" Background="#EEF2F7" Padding="4" CornerRadius="0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1,0,0,1" Cursor="Hand" ToolTip.Tip="Highlight row" ToolTip.Placement="Top" ToolTip.VerticalOffset="-5">
-                            <Viewbox Width="20" Height="20">
+                        <Grid ColumnDefinitions="40,92,*,*,*,*,*,*,*,*,*,*,*,*" Margin="0,0,0,0">
+                          <Border Grid.Column="0" Classes="iconCell" Background="#EEF2F7" Padding="7" Margin="3,2,3,2" CornerRadius="4" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1" Cursor="Hand" ToolTip.Tip="Highlight row" ToolTip.Placement="Top" ToolTip.VerticalOffset="-5">
+                            <Viewbox Width="26" Height="26">
                               <Canvas Width="24" Height="24">
                                 <Rectangle Canvas.Left="7" Canvas.Top="8" Width="10" Height="10" Fill="#DCEBFF" Stroke="#0A84FF" StrokeThickness="1" RadiusX="1" RadiusY="1" />
 
                                 <!-- Hovering pin: above square (not fixated) -->
                                 <Canvas Classes="pinHover" Width="24" Height="24">
-                                  <Line StartPoint="12,5" EndPoint="12,10" Stroke="#8E8E93" StrokeThickness="1.1" StrokeLineCap="Round" />
-                                  <Ellipse Canvas.Left="10.6" Canvas.Top="3.2" Width="2.8" Height="2.8" Fill="#FF3B30" />
-                                  <Polygon Points="11.6,10 12,11 12.4,10" Fill="#6E6E73" />
+                                  <!-- Head -->
+                                  <Ellipse Canvas.Left="7.2" Canvas.Top="0.5" Width="9.6" Height="6.4" Fill="#111111" />
+                                  <!-- Collar -->
+                                  <Rectangle Canvas.Left="9.3" Canvas.Top="5.8" Width="5.4" Height="2.8" Fill="#111111" RadiusX="1" RadiusY="1" />
+                                  <!-- Pin body -->
+                                  <Polygon Points="12,8.6 14.8,12.6 9.2,12.6" Fill="#111111" />
+                                  <!-- Needle (hovering above square) -->
+                                  <Line StartPoint="12,12.6" EndPoint="12,14.2" Stroke="#111111" StrokeThickness="1.6" StrokeLineCap="Round" />
                                 </Canvas>
 
                                 <!-- Stuck pin: enters square (fixated) -->
                                 <Canvas Classes="pinStuck" Width="24" Height="24">
-                                  <Line StartPoint="12,5" EndPoint="12,14" Stroke="#8E8E93" StrokeThickness="1.1" StrokeLineCap="Round" />
-                                  <Ellipse Canvas.Left="10.6" Canvas.Top="3.2" Width="2.8" Height="2.8" Fill="#FF3B30" />
-                                  <Polygon Points="11.6,14 12,15 12.4,14" Fill="#6E6E73" />
+                                  <!-- Head -->
+                                  <Ellipse Canvas.Left="7.2" Canvas.Top="0.5" Width="9.6" Height="6.4" Fill="#111111" />
+                                  <!-- Collar -->
+                                  <Rectangle Canvas.Left="9.3" Canvas.Top="5.8" Width="5.4" Height="2.8" Fill="#111111" RadiusX="1" RadiusY="1" />
+                                  <!-- Pin body -->
+                                  <Polygon Points="12,8.6 14.8,12.6 9.2,12.6" Fill="#111111" />
+                                  <!-- Needle (stuck into square) -->
+                                  <Line StartPoint="12,12.6" EndPoint="12,17.8" Stroke="#111111" StrokeThickness="1.6" StrokeLineCap="Round" />
                                 </Canvas>
                               </Canvas>
                             </Viewbox>
@@ -143,7 +159,7 @@
                           <Border Grid.Column="1" Classes="dayCell" Background="#EEF2F7" Padding="0" CornerRadius="0" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1,0,0,1">
                             <Grid ColumnDefinitions="4,*">
                               <Border Grid.Column="0" Classes="rowAccent" Background="Transparent" />
-                              <TextBlock Grid.Column="1" Classes="dayLabel" Text="{Binding DayLabel}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" />
+                              <TextBlock Grid.Column="1" Classes="dayLabel" Text="{Binding DayLabel}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="#142A3B" />
                             </Grid>
                           </Border>
 

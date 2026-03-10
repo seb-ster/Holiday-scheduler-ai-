@@ -66,13 +66,20 @@
       <Setter Property="FontWeight" Value="Medium" />
     </Style>
 
-    <Style Selector="TabItem">
+    <Style Selector="TabStripItem">
       <Setter Property="Padding" Value="12,6" />
       <Setter Property="Margin" Value="0,0,6,0" />
+      <Setter Property="Foreground" Value="#1D1D1F" />
+      <Setter Property="Background" Value="{DynamicResource SurfaceMutedBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource OutlineBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
     </Style>
 
-    <Style Selector="TabItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="TabStripItem:selected">
       <Setter Property="Background" Value="{DynamicResource PrimaryContainerBrush}" />
+      <Setter Property="Foreground" Value="#0F4EA9" />
+      <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
     </Style>
 
     <Style Selector="ToggleButton.chip">

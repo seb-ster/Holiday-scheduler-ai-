@@ -2,8 +2,11 @@ namespace HolidayScheduler.Gui
 
 open Avalonia.Controls
 open Avalonia.Controls.Primitives
+open Avalonia.Controls.Shapes
 open Avalonia.Markup.Xaml
 open Avalonia.Media
+open Avalonia.Threading
+open Avalonia.VisualTree
 open System
 open System.Collections.ObjectModel
 open System.Globalization
@@ -42,6 +45,7 @@ type YearRosterView() =
 type StatusTone =
     | Positive
     | Negative
+    | Neutral
 
 type MainWindow() as this =
     inherit Window()
@@ -57,8 +61,13 @@ type MainWindow() as this =
     let mutable statusBar: Border option = None
     let mutable statusMessage: TextBlock option = None
     let mutable statusCountdown: TextBlock option = None
-    let mutable statusCountdownValue = 5
+    let mutable statusCountdownValue = 2
     let mutable statusTimer: Avalonia.Threading.DispatcherTimer option = None
+    let mutable statusProgressFill: Rectangle option = None
+    let mutable statusCloseButton: Border option = None
+    let mutable statusCloseLabel: TextBlock option = None
+    let mutable hasDiscoveredHighlight = false
+    let mutable currentRosterListBox: ListBox option = None
 
     let monthName month =
         CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames[month - 1]
@@ -108,6 +117,9 @@ type MainWindow() as this =
         statusBar <- Some(this.FindControl<Border>("StatusBar"))
         statusMessage <- Some(this.FindControl<TextBlock>("StatusMessage"))
         statusCountdown <- Some(this.FindControl<TextBlock>("StatusCountdown"))
+        statusProgressFill <- Some(this.FindControl<Rectangle>("StatusProgressFill"))
+        statusCloseButton <- Some(this.FindControl<Border>("StatusCloseButton"))
+        statusCloseLabel <- Some(this.FindControl<TextBlock>("StatusCloseLabel"))
 
     let yearTab0 = this.FindControl<TabStripItem>("YearTab0")
     let yearTab1 = this.FindControl<TabStripItem>("YearTab1")
@@ -122,13 +134,16 @@ type MainWindow() as this =
         | None -> ()
 
     let setStatusTone tone =
-        let backgroundHex, foregroundHex =
+        let backgroundHex, foregroundHex, borderHex, progressHex =
             match tone with
-            | Positive -> "#DCFCE7", "#166534"
-            | Negative -> "#FEE2E2", "#991B1B"
+            | Positive -> "#C8E6C9", "#1B5E20", "#81C784", "#A5D6A7"
+            | Negative -> "#FFCDD2", "#B71C1C", "#EF9A9A", "#EF9A9A"
+            | Neutral -> "#FFF9C4", "#7A5A00", "#FFE082", "#FFE082"
 
         match statusBar with
-        | Some bar -> bar.Background <- SolidColorBrush(Color.Parse(backgroundHex))
+        | Some bar -> 
+            bar.Background <- SolidColorBrush(Color.Parse(backgroundHex))
+            bar.BorderBrush <- SolidColorBrush(Color.Parse(borderHex))
         | None -> ()
 
         let foregroundBrush = SolidColorBrush(Color.Parse(foregroundHex))
@@ -139,6 +154,20 @@ type MainWindow() as this =
 
         match statusCountdown with
         | Some countdown -> countdown.Foreground <- foregroundBrush
+        | None -> ()
+
+        match statusCloseButton with
+        | Some btn ->
+            btn.BorderBrush <- SolidColorBrush(Color.Parse(borderHex))
+            btn.Background <- SolidColorBrush(Color.Parse(backgroundHex))
+        | None -> ()
+
+        match statusCloseLabel with
+        | Some label -> label.Foreground <- foregroundBrush
+        | None -> ()
+
+        match statusProgressFill with
+        | Some fill -> fill.Fill <- SolidColorBrush(Color.Parse(progressHex))
         | None -> ()
 
     let selectYear index =
@@ -178,10 +207,15 @@ type MainWindow() as this =
         | Some msg -> msg.Text <- message
         | None -> ()
 
-        statusCountdownValue <- 5
+        statusCountdownValue <- 2
 
         match statusCountdown with
         | Some countdown -> countdown.Text <- statusCountdownValue.ToString()
+        | None -> ()
+
+        // Reset progress fill to 0 width
+        match statusProgressFill with
+        | Some fill -> fill.Width <- 0.0
         | None -> ()
 
         match statusBar with
@@ -193,17 +227,33 @@ type MainWindow() as this =
         | Some timer -> timer.Stop()
         | None -> ()
 
-        // Create new countdown timer
+        // Create new countdown timer with smooth progress updates
+        let totalDuration = 2.0 // seconds
+        let updateInterval = 0.05 // 50ms for smooth animation
+        let totalSteps = int (totalDuration / updateInterval)
+        let mutable currentStep = 0
+        let buttonWidth = 82.0 // matches XAML Width
+
         let timer = Avalonia.Threading.DispatcherTimer()
-        timer.Interval <- TimeSpan.FromSeconds(1.0)
+        timer.Interval <- TimeSpan.FromSeconds(updateInterval)
         timer.Tick.Add(fun _ ->
-            statusCountdownValue <- statusCountdownValue - 1
-
-            match statusCountdown with
-            | Some countdown -> countdown.Text <- statusCountdownValue.ToString()
+            currentStep <- currentStep + 1
+            let progress = float currentStep / float totalSteps
+            
+            // Update progress fill width
+            match statusProgressFill with
+            | Some fill -> fill.Width <- buttonWidth * progress
             | None -> ()
-
-            if statusCountdownValue <= 0 then
+            
+            // Update countdown display every second
+            let secondsRemaining = int (totalDuration * (1.0 - progress))
+            if secondsRemaining <> statusCountdownValue then
+                statusCountdownValue <- secondsRemaining
+                match statusCountdown with
+                | Some countdown -> countdown.Text <- statusCountdownValue.ToString()
+                | None -> ()
+            
+            if currentStep >= totalSteps then
                 hideStatus())
 
         statusTimer <- Some timer
@@ -222,6 +272,37 @@ type MainWindow() as this =
     do
         buildYearTabs ()
 
+        // RosterListBox is created inside a ContentTemplate; locate it after layout pass.
+        let attachRosterSelectionHandler () =
+            Dispatcher.UIThread.Post((fun () ->
+                let descendants =
+                    match yearContent with
+                    | Some content -> content.GetVisualDescendants()
+                    | None -> this.GetVisualDescendants()
+
+                let listBoxCandidate =
+                    descendants
+                    |> Seq.tryPick (fun visual ->
+                        match visual with
+                        | :? ListBox as lb -> Some lb
+                        | _ -> None)
+
+                match listBoxCandidate, currentRosterListBox with
+                | Some lb, Some current when Object.ReferenceEquals(lb, current) -> ()
+                | Some lb, _ ->
+                    currentRosterListBox <- Some lb
+                    lb.SelectionChanged.Add(fun _ ->
+                        match lb.SelectedItem with
+                        | :? RosterDayRow as row ->
+                            if not hasDiscoveredHighlight then
+                                hasDiscoveredHighlight <- true
+                                showStatus "Success: highlight discovered" Positive
+                            else
+                                showStatus $"Day {row.DayLabel} selected" Positive
+                        | _ ->
+                            showStatus "No day selected" Negative)
+                | None, _ -> ()), DispatcherPriority.Background)
+
         for i in 0 .. yearTabs.Length - 1 do
             yearTabs[i].Content <- years[i].Year.ToString(CultureInfo.InvariantCulture)
 
@@ -232,7 +313,8 @@ type MainWindow() as this =
                     let index = tabStrip.SelectedIndex
 
                     if index >= 0 && index < years.Count && index <> selectedIndex then
-                        selectYear index)
+                        selectYear index
+                        attachRosterSelectionHandler ())
         | None -> ()
 
         selectYear selectedIndex
@@ -243,12 +325,17 @@ type MainWindow() as this =
         if not (isNull closeButton) then
             closeButton.PointerPressed.Add(fun _ -> hideStatus())
 
-        // Wire up roster list selection to show status
-        let rosterListBox = this.FindControl<ListBox>("RosterListBox")
-        if not (isNull rosterListBox) then
-            rosterListBox.SelectionChanged.Add(fun _ ->
-                match rosterListBox.SelectedItem with
-                | :? RosterDayRow as row ->
-                    showStatus $"Day {row.DayLabel} selected" Positive
-                | _ ->
-                    showStatus "No day selected" Negative)
+        // Manual status test controls
+        let positiveButton = this.FindControl<Button>("StatusPositiveButton")
+        if not (isNull positiveButton) then
+            positiveButton.Click.Add(fun _ -> showStatus "Manual positive status" Positive)
+
+        let negativeButton = this.FindControl<Button>("StatusNegativeButton")
+        if not (isNull negativeButton) then
+            negativeButton.Click.Add(fun _ -> showStatus "Manual negative status" Negative)
+
+        let neutralButton = this.FindControl<Button>("StatusNeutralButton")
+        if not (isNull neutralButton) then
+            neutralButton.Click.Add(fun _ -> showStatus "Manual neutral status" Neutral)
+
+        attachRosterSelectionHandler ()
