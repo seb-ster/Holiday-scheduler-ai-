@@ -182,9 +182,9 @@ type MainWindow() as this =
     let setStatusTone tone =
         let backgroundHex, foregroundHex, borderHex, progressHex =
             match tone with
-            | Positive -> "#E8F5E9", "#2E7D32", "#A5D6A7", "#C8E6C9"
-            | Negative -> "#FFEBEE", "#B71C1C", "#FFCDD2", "#FFCDD2"
-            | Neutral -> "#FFFDE7", "#F57F17", "#FFF59D", "#FFF59D"
+            | Positive -> "#CFEBD8", "#165522", "#7FBE90", "#9FDAB0"
+            | Negative -> "#FFD6D6", "#8A1B1B", "#EB9A9A", "#F3B0B0"
+            | Neutral -> "#FFEEC0", "#7F5600", "#E9CB74", "#9D6A00"
 
         match statusBar with
         | Some bar -> 
@@ -204,7 +204,7 @@ type MainWindow() as this =
 
         match statusCloseButton with
         | Some btn ->
-            btn.BorderBrush <- SolidColorBrush(Color.Parse(borderHex))
+            btn.BorderBrush <- SolidColorBrush(Color.Parse(backgroundHex))
             btn.Background <- SolidColorBrush(Color.Parse(backgroundHex))
         | None -> ()
 
@@ -221,18 +221,60 @@ type MainWindow() as this =
             isSelecting <- true
 
             try
+                let previousIndex = selectedIndex
                 selectedIndex <- index
                 match yearTabStrip with
                 | Some tabStrip -> tabStrip.SelectedIndex <- index
                 | None -> ()
 
                 match yearContent with
-                | Some content -> content.Content <- years[index]
+                | Some content ->
+                    let direction = if index >= previousIndex then 1.0 else -1.0
+                    let width = if content.Bounds.Width > 0.0 then content.Bounds.Width else 1000.0
+                    let startX = (max 260.0 (width * 0.55)) * direction
+                    let transform = TranslateTransform(startX, 0.0)
+                    content.RenderTransform <- transform
+                    content.Opacity <- 0.62
+                    content.Content <- years[index]
+
+                    let steps = 13
+                    let mutable currentStep = 0
+                    let slideTimer = DispatcherTimer()
+                    slideTimer.Interval <- TimeSpan.FromMilliseconds(16.0)
+                    slideTimer.Tick.Add(fun _ ->
+                        currentStep <- currentStep + 1
+                        let p = min 1.0 (float currentStep / float steps)
+                        let eased = 1.0 - Math.Pow(1.0 - p, 3.0)
+                        transform.X <- startX * (1.0 - eased)
+                        content.Opacity <- 0.62 + (0.38 * eased)
+
+                        if currentStep >= steps then
+                            transform.X <- 0.0
+                            content.Opacity <- 1.0
+                            slideTimer.Stop())
+                    slideTimer.Start()
                 | None -> ()
 
                 updateYearLabel years[index].Year
             finally
                 isSelecting <- false
+
+    let updateActiveMonthHighlight monthIndex =
+        let classNames =
+            [|
+                "monthCol1Active"; "monthCol2Active"; "monthCol3Active"; "monthCol4Active";
+                "monthCol5Active"; "monthCol6Active"; "monthCol7Active"; "monthCol8Active";
+                "monthCol9Active"; "monthCol10Active"; "monthCol11Active"; "monthCol12Active"
+            |]
+
+        match currentRosterListBox with
+        | Some lb ->
+            for cls in classNames do
+                lb.Classes.Remove(cls) |> ignore
+
+            if monthIndex >= 1 && monthIndex <= 12 then
+                lb.Classes.Add(classNames[monthIndex - 1])
+        | None -> ()
 
     let hideStatus () =
         match statusTimer with
@@ -274,7 +316,7 @@ type MainWindow() as this =
         | None -> ()
 
         // Create new countdown timer with smooth progress updates
-        let totalDuration = 2.0 // seconds
+        let totalDuration = match tone with Neutral -> 3.0 | _ -> 2.0
         let updateInterval = 0.05 // 50ms for smooth animation
         let totalSteps = int (totalDuration / updateInterval)
         let mutable currentStep = 0
@@ -337,6 +379,7 @@ type MainWindow() as this =
                 | Some lb, Some current when Object.ReferenceEquals(lb, current) -> ()
                 | Some lb, _ ->
                     currentRosterListBox <- Some lb
+                    updateActiveMonthHighlight DateTime.Today.Month
                     lb.SelectionChanged.Add(fun _ ->
                         match lb.SelectedItem with
                         | :? RosterDayRow as row ->
@@ -382,6 +425,7 @@ type MainWindow() as this =
                     selectYear index
                     attachRosterSelectionHandler ()
                     Dispatcher.UIThread.Post((fun () ->
+                        updateActiveMonthHighlight today.Month
                         match currentRosterListBox with
                         | Some lb when today.Day - 1 < lb.ItemCount && today.Day - 1 >= 0 ->
                             lb.SelectedIndex <- today.Day - 1

@@ -21,7 +21,7 @@ type App() =
             Task.Run(fun () ->
                 task {
                     // Keep splash visible a bit longer so startup feedback is easier to notice.
-                    do! Task.Delay(2200)
+                    do! Task.Delay(1100)
                     Dispatcher.UIThread.Post(fun () ->
                         try
                             let main = MainWindow()
