@@ -1,0 +1,17 @@
+{
+  "name": "holiday-scheduler-backend",
+  "version": "1.0.0",
+  "description": "Backend for Holiday Scheduler crash reports and feedback",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

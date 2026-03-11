@@ -1,0 +1,87 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - ui/material-design
+    paths:
+      - 'gui/avalonia/**'
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        working-directory: gui/avalonia
+        run: dotnet restore
+
+      - name: Build Release
+        working-directory: gui/avalonia
+        run: dotnet build -c Release
+
+      - name: Package macOS
+        working-directory: gui/avalonia
+        run: |
+          chmod +x release_all.sh
+          ./release_all.sh mac
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep -m1 'AssemblyVersion' gui/avalonia/HolidayScheduler.Gui.fsproj | grep -oP '\d+\.\d+\.\d+')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: Release v${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload macOS artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: releases/holiday-scheduler-demonstrator-macos-arm64.zip
+          asset_name: holiday-scheduler-demonstrator-macos-arm64.zip
+          asset_content_type: application/zip
+
+      - name: Notify backend of release
+        if: success()
+        run: |
+          curl -X POST http://localhost:3000/api/release \
+            -H "Content-Type: application/json" \
+            -d '{
+              "version": "${{ steps.version.outputs.version }}",
+              "download_url": "${{ steps.create_release.outputs.upload_url }}/holiday-scheduler-demonstrator-macos-arm64.zip",
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+            }' || echo "Backend notification failed (may be offline)"
