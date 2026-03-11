@@ -68,7 +68,7 @@ module Support =
         let options = JsonSerializerOptions(WriteIndented = true)
         File.WriteAllText(path, JsonSerializer.Serialize(data, options))
 
-    let private tryPost kind data =
+    let private tryPost (kind: string) (data: obj) : Task<bool> =
         task {
             if String.IsNullOrWhiteSpace(supportEndpoint) then
                 return false
@@ -77,14 +77,14 @@ module Support =
                     use client = new HttpClient()
                     client.DefaultRequestHeaders.UserAgent.ParseAdd("HolidaySchedulerDemonstrator/1.0")
                     use content = new StringContent(JsonSerializer.Serialize(data), Encoding.UTF8, "application/json")
-                    content.Headers.Add("X-Holiday-Report-Kind", kind)
+                    content.Headers.TryAddWithoutValidation("X-Holiday-Report-Kind", kind) |> ignore
                     let! response = client.PostAsync(supportEndpoint, content)
                     return response.IsSuccessStatusCode
                 with _ ->
                     return false
         }
 
-    let saveCrashReport (exception: exn) =
+    let saveCrashReport (ex: exn) =
         try
             ensureSupportDirs ()
 
@@ -97,13 +97,13 @@ module Support =
                    os = RuntimeInformation.OSDescription
                    processArchitecture = RuntimeInformation.ProcessArchitecture.ToString()
                    machineName = Environment.MachineName
-                   exceptionType = exception.GetType().FullName
-                   message = exception.Message
-                   stackTrace = exception.StackTrace
-                   innerException = if isNull exception.InnerException then null else exception.InnerException.ToString() |}
+                   exceptionType = ex.GetType().FullName
+                   message = ex.Message
+                   stackTrace = ex.StackTrace
+                   innerException = if isNull ex.InnerException then null else ex.InnerException.ToString() |}
 
             writeJson path report
-            Task.Run(fun () -> tryPost "crash" report :> Task) |> ignore
+            tryPost "crash" (box report) |> ignore
             path
         with _ ->
             String.Empty
@@ -122,6 +122,6 @@ module Support =
                    payload = payload |}
 
             writeJson path report
-            let! sent = tryPost "feedback" report
+            let! sent = tryPost "feedback" (box report)
             return path, sent
         }

@@ -225,11 +225,13 @@
     <!-- Main menu overlay: near-transparent so the content behind bleeds through, giving a floating panel feel -->
     <Border x:Name="MainMenuOverlay" Grid.RowSpan="3" Background="#50000000" IsVisible="False">
       <Grid>
-        <Border x:Name="MainMenuPanel" Width="760" MaxWidth="900" Padding="0" CornerRadius="14" Background="#F5F5F7" BorderBrush="#D8D8DC" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" BoxShadow="0 12 60 0 #00000045">
+        <Border x:Name="MainMenuPanel" Width="760" MaxWidth="900" Padding="0" CornerRadius="14" Background="#DFE5F2" BorderBrush="#B3BFD6" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" BoxShadow="0 16 64 0 #0000004A">
           <Border.Styles>
             <Style Selector="Border.menuCard">
-              <Setter Property="Background" Value="#FFFFFF" />
-              <Setter Property="BorderBrush" Value="#E4E4EA" />
+              <Setter Property="Background" Value="#C8DAFF" />
+              <Setter Property="BorderBrush" Value="#6F8FC6" />
+              <Setter Property="BorderThickness" Value="1" />
+              <Setter Property="BoxShadow" Value="0 3 10 0 #233A6622" />
               <Setter Property="Opacity" Value="1" />
               <Setter Property="Transitions">
                 <Transitions>
@@ -238,7 +240,8 @@
               </Setter>
             </Style>
             <Style Selector="Border.menuCard:pointerover">
-              <Setter Property="Opacity" Value="0.93" />
+              <Setter Property="Background" Value="#BCD3FF" />
+              <Setter Property="Opacity" Value="1" />
             </Style>
           </Border.Styles>
           <Grid RowDefinitions="Auto,Auto,Auto">
@@ -269,7 +272,7 @@
             <!-- Cards Section -->
             <StackPanel Grid.Row="1" Spacing="12" Margin="32,0,32,28">
               <!-- Roster Card -->
-              <Border Classes="menuCard" BorderThickness="1" Padding="22" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
+              <Border Classes="menuCard" Background="#C8DAFF" BorderBrush="#6F8FC6" BorderThickness="1" Padding="22" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
                 <Grid ColumnDefinitions="*,Auto">
                   <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                     <TextBlock Text="Roster" FontSize="15" FontWeight="SemiBold" Foreground="#1A1A1E" />
@@ -280,24 +283,24 @@
               </Border>
 
               <!-- Requests Card -->
-              <Border Classes="menuCard" BorderThickness="1" Padding="22" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
+              <Border Classes="menuCard" Background="#C8DAFF" BorderBrush="#6F8FC6" BorderThickness="1" Padding="22" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
                 <Grid ColumnDefinitions="*,Auto">
                   <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                     <TextBlock Text="Requests" FontSize="15" FontWeight="SemiBold" Foreground="#1A1A1E" />
                     <TextBlock Text="Load employee holiday request data." FontSize="12" Foreground="#7A7A8A" />
                   </StackPanel>
-                  <Button Grid.Column="1" x:Name="ImportRequestsButton" Classes="tonal" Content="Import" MinWidth="110" Margin="20,0,0,0" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" x:Name="ImportRequestsButton" Classes="filled" Content="Import" MinWidth="110" Margin="20,0,0,0" VerticalAlignment="Center" />
                 </Grid>
               </Border>
 
               <!-- Constraints Card -->
-              <Border Classes="menuCard" BorderThickness="1" Padding="22" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
+              <Border Classes="menuCard" Background="#C8DAFF" BorderBrush="#6F8FC6" BorderThickness="1" Padding="22" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
                 <Grid ColumnDefinitions="*,Auto">
                   <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                     <TextBlock Text="Constraints" FontSize="15" FontWeight="SemiBold" Foreground="#1A1A1E" />
                     <TextBlock Text="Load scheduling constraints and rules." FontSize="12" Foreground="#7A7A8A" />
                   </StackPanel>
-                  <Button Grid.Column="1" x:Name="ImportConstraintsButton" Classes="tonal" Content="Import" MinWidth="110" Margin="20,0,0,0" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" x:Name="ImportConstraintsButton" Classes="filled" Content="Import" MinWidth="110" Margin="20,0,0,0" VerticalAlignment="Center" />
                 </Grid>
               </Border>
             </StackPanel>
@@ -305,7 +308,7 @@
             <!-- Footer Section -->
             <StackPanel Grid.Row="2" Spacing="12" Margin="32,0,32,22">
               <!-- Startup preference card -->
-              <Border Classes="menuCard" BorderThickness="1" Padding="16" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
+              <Border Classes="menuCard" Background="#C8DAFF" BorderBrush="#6F8FC6" BorderThickness="1" Padding="16" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
                 <Grid ColumnDefinitions="*,Auto">
                   <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                     <TextBlock Text="Startup" FontSize="14" FontWeight="SemiBold" Foreground="#1A1A1E" />
@@ -318,35 +321,35 @@
               </Border>
 
               <!-- New session card -->
-              <Border Classes="menuCard" BorderThickness="1" Padding="16" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
+              <Border Classes="menuCard" Background="#C8DAFF" BorderBrush="#6F8FC6" BorderThickness="1" Padding="16" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
                 <Grid ColumnDefinitions="*,Auto">
                   <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                     <TextBlock Text="Session" FontSize="14" FontWeight="SemiBold" Foreground="#1A1A1E" />
                     <TextBlock Text="Start with a fresh workspace state." FontSize="12" Foreground="#7A7A8A" />
                   </StackPanel>
-                  <Button Grid.Column="1" x:Name="StartFreshButton" Classes="tonal" Content="New session" MinWidth="120" Margin="20,0,0,0" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" x:Name="StartFreshButton" Classes="filled" Content="New session" MinWidth="120" Margin="20,0,0,0" VerticalAlignment="Center" />
                 </Grid>
               </Border>
 
               <!-- Feedback card -->
-              <Border Classes="menuCard" BorderThickness="1" Padding="16" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
+              <Border Classes="menuCard" Background="#C8DAFF" BorderBrush="#6F8FC6" BorderThickness="1" Padding="16" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
                 <Grid ColumnDefinitions="*,Auto">
                   <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                     <TextBlock Text="Feedback" FontSize="14" FontWeight="SemiBold" Foreground="#1A1A1E" />
                     <TextBlock Text="Send comments, problems, or improvement ideas." FontSize="12" Foreground="#7A7A8A" />
                   </StackPanel>
-                  <Button Grid.Column="1" x:Name="FeedbackButton" Classes="tonal" Content="Send feedback" MinWidth="140" Margin="20,0,0,0" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" x:Name="FeedbackButton" Classes="filled" Content="Send feedback" MinWidth="140" Margin="20,0,0,0" VerticalAlignment="Center" />
                 </Grid>
               </Border>
 
               <!-- Quit card -->
-              <Border Classes="menuCard" BorderThickness="1" Padding="16" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
+              <Border Classes="menuCard" Background="#C8DAFF" BorderBrush="#6F8FC6" BorderThickness="1" Padding="16" CornerRadius="10" BoxShadow="0 2 8 0 #00000012">
                 <Grid ColumnDefinitions="*,Auto">
                   <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                     <TextBlock Text="Application" FontSize="14" FontWeight="SemiBold" Foreground="#1A1A1E" />
                     <TextBlock Text="Close the demonstrator." FontSize="12" Foreground="#7A7A8A" />
                   </StackPanel>
-                  <Button Grid.Column="1" x:Name="QuitButton" Classes="tonal" Content="Quit" MinWidth="110" Margin="20,0,0,0" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" x:Name="QuitButton" Classes="filled" Content="Quit" MinWidth="110" Margin="20,0,0,0" VerticalAlignment="Center" />
                 </Grid>
               </Border>
             </StackPanel>

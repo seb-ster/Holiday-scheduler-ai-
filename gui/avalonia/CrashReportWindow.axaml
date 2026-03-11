@@ -1,0 +1,57 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="HolidayScheduler.Gui.CrashReportWindow"
+        Width="640"
+        Height="520"
+        MinWidth="560"
+        MinHeight="440"
+        WindowStartupLocation="CenterOwner"
+        Title="Unerwarteter Fehler">
+  <Border Background="#F7F7FA" Padding="22">
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+      <TextBlock x:Name="CrashTitleText"
+                 Text="Die Anwendung ist auf einen Fehler gestoßen"
+                 FontSize="22"
+                 FontWeight="SemiBold"
+                 Foreground="#1A1A1E" />
+
+      <TextBlock Grid.Row="1"
+                 Text="Ein Bericht wurde automatisch gespeichert. Sie konnen ihn direkt anzeigen oder an den Support weitergeben."
+                 TextWrapping="Wrap"
+                 Foreground="#4D4D57"
+                 FontSize="13" />
+
+      <Border Grid.Row="2"
+              CornerRadius="8"
+              Background="#FFF3D6"
+              BorderBrush="#E8C879"
+              BorderThickness="1"
+              Padding="10">
+        <TextBlock x:Name="CrashSummaryText"
+                   Text="Fehlerdetails"
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   Foreground="#7A5314" />
+      </Border>
+
+      <TextBox Grid.Row="3"
+               x:Name="CrashDetailText"
+               IsReadOnly="True"
+               TextWrapping="Wrap"
+               FontFamily="Menlo, Monaco, Consolas, monospace"
+               FontSize="11"
+               ScrollViewer.VerticalScrollBarVisibility="Auto"
+               ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+
+      <Grid Grid.Row="4" ColumnDefinitions="*,Auto,Auto">
+        <TextBlock Text="Hinweis: Beim nachsten Start kann automatisch nach einem Update gesucht werden."
+                   VerticalAlignment="Center"
+                   Foreground="#6F6F7A"
+                   FontSize="11"
+                   TextWrapping="Wrap" />
+        <Button Grid.Column="1" x:Name="CrashRevealButton" Content="Bericht anzeigen" Classes="tonal" MinWidth="130" Margin="0,0,10,0" />
+        <Button Grid.Column="2" x:Name="CrashCloseButton" Content="Schliessen" Classes="filled" MinWidth="120" />
+      </Grid>
+    </Grid>
+  </Border>
+</Window>

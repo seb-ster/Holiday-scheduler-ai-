@@ -51,13 +51,15 @@ type FeedbackWindow(currentVersion: string) as this =
                     | None -> ""
 
                 if not (System.String.IsNullOrWhiteSpace(message)) then
-                    let payload =
-                        { Support.FeedbackPayload.Category = selectedCategory ()
+                    let contact =
+                        match contactBox with
+                        | Some box when not (System.String.IsNullOrWhiteSpace(box.Text)) -> box.Text.Trim()
+                        | _ -> ""
+
+                    let payload: Support.FeedbackPayload =
+                        { Category = selectedCategory ()
                           Message = message.Trim()
-                          Contact =
-                            match contactBox with
-                            | Some box when not (System.String.IsNullOrWhiteSpace(box.Text)) -> box.Text.Trim()
-                            | _ -> ""
+                          Contact = contact
                           CurrentVersion = currentVersion }
 
                     submitted.Trigger(payload)

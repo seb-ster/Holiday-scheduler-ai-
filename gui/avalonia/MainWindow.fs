@@ -15,6 +15,7 @@ open System.Diagnostics
 open System.Globalization
 open System.Net.Http
 open System.IO
+open System.IO.Compression
 open System.Reflection
 open System.Runtime.InteropServices
 open System.Text.Json
@@ -68,12 +69,14 @@ type StatusTone =
     | Negative
     | Neutral
 
-type MainWindow() as this =
+type MainWindow(?startupSplash: SplashWindow) as this =
     inherit Window()
 
     let releasesUrl = "https://github.com/seb-ster/Holiday-scheduler-ai-/releases"
     let latestReleaseApi = "https://api.github.com/repos/seb-ster/Holiday-scheduler-ai-/releases/latest"
     let updateTestMode = Environment.GetEnvironmentVariable("HOLIDAY_UPDATE_TEST_MODE")
+
+    let splash = startupSplash
 
     let currentYear = DateTime.Now.Year
     let years = ObservableCollection<YearRosterView>()
@@ -313,17 +316,38 @@ type MainWindow() as this =
                     | _ -> None)
                 |> Seq.toList
 
-            let preferred =
+            // Prioritize: .dmg > macOS .zip > other .zip > any macOS asset > first asset
+            let dmg =
+                candidates
+                |> List.tryFind (fun (name, _) ->
+                    (name.Contains("macos", StringComparison.OrdinalIgnoreCase)
+                     || name.Contains("osx", StringComparison.OrdinalIgnoreCase))
+                    && name.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase))
+
+            let macosZip =
+                candidates
+                |> List.tryFind (fun (name, _) ->
+                    (name.Contains("macos", StringComparison.OrdinalIgnoreCase)
+                     || name.Contains("osx", StringComparison.OrdinalIgnoreCase)
+                     || name.Contains("arm64", StringComparison.OrdinalIgnoreCase))
+                    && name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+
+            let zip =
+                candidates
+                |> List.tryFind (fun (name, _) -> name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+
+            let macosAsset =
                 candidates
                 |> List.tryFind (fun (name, _) ->
                     name.Contains("macos", StringComparison.OrdinalIgnoreCase)
-                    || name.Contains("osx", StringComparison.OrdinalIgnoreCase)
-                    || name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)
-                    || name.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase))
+                    || name.Contains("osx", StringComparison.OrdinalIgnoreCase))
 
-            match preferred with
-            | Some asset -> Some asset
-            | None -> candidates |> List.tryHead
+            match dmg, macosZip, zip, macosAsset with
+            | Some asset, _, _, _ -> Some asset
+            | None, Some asset, _, _ -> Some asset
+            | None, None, Some asset, _ -> Some asset
+            | None, None, None, Some asset -> Some asset
+            | _ -> candidates |> List.tryHead
         else
             None
 
@@ -351,7 +375,64 @@ type MainWindow() as this =
         with _ ->
             ()
 
-    let downloadLatestAsset (latestTag: string) (assetName: string) (assetUrl: string) =
+    let extractAppFromZip (zipPath: string) =
+        try
+            use archive = ZipFile.OpenRead(zipPath)
+            // Look for .app bundle in the zip
+            let appEntry =
+                archive.Entries
+                |> Seq.tryFind (fun e ->
+                    e.FullName.Contains(".app/", StringComparison.OrdinalIgnoreCase)
+                    && e.FullName.EndsWith("MacOS/Holiday Scheduler Demonstrator", StringComparison.OrdinalIgnoreCase))
+
+            match appEntry with
+            | Some entry ->
+                // Extract to Applications folder
+                let appDir = Path.Combine("/Applications", "Holiday Scheduler Demonstrator.app")
+                let targetPath = Path.Combine(appDir, "Contents", "MacOS", "Holiday Scheduler Demonstrator")
+                
+                // Create directory structure if needed
+                Directory.CreateDirectory(Path.GetDirectoryName(targetPath)) |> ignore
+                
+                // Extract all files from .app bundle
+                archive.Entries
+                |> Seq.filter (fun e ->
+                    e.FullName.Contains(".app/", StringComparison.OrdinalIgnoreCase)
+                    && not (String.IsNullOrWhiteSpace(e.Name)))
+                |> Seq.iter (fun e ->
+                    let relativePath =
+                        if e.FullName.Contains(".app/Contents/") then
+                            let idx = e.FullName.IndexOf(".app/Contents/")
+                            if idx >= 0 then
+                                e.FullName.Substring(idx + 5) // Skip ".app/"
+                            else
+                                e.FullName
+                        else
+                            e.FullName
+                    
+                    let targetFile = Path.Combine(appDir, relativePath)
+                    let targetDir = Path.GetDirectoryName(targetFile)
+                    Directory.CreateDirectory(targetDir) |> ignore
+                    
+                    if not (String.IsNullOrWhiteSpace(e.Name)) then
+                        do
+                            use src = e.Open()
+                            use dst = File.Create(targetFile)
+                            src.CopyTo(dst))
+                
+                // Make executable
+                if RuntimeInformation.IsOSPlatform(OSPlatform.OSX) then
+                    let psi = ProcessStartInfo("chmod")
+                    psi.ArgumentList.Add("+x")
+                    psi.ArgumentList.Add(targetPath)
+                    psi.UseShellExecute <- false
+                    Process.Start(psi) |> ignore
+                
+                Some appDir
+            | None -> None
+        with _ -> None
+
+    let downloadLatestAsset (latestTag: string) (assetName: string) (assetUrl: string) (splash: SplashWindow option) =
         Task.Run(fun () ->
             task {
                 try
@@ -365,6 +446,11 @@ type MainWindow() as this =
                     use client = new HttpClient()
                     client.DefaultRequestHeaders.UserAgent.ParseAdd("HolidaySchedulerDemonstrator/1.0")
 
+                    Dispatcher.UIThread.Post(fun () ->
+                        match splash with
+                        | Some s -> s.SetStatus("Lade Update herunter...")
+                        | None -> postStatus "Downloading update..." Neutral)
+
                     use! response = client.GetAsync(assetUrl)
                     response.EnsureSuccessStatusCode()
 
@@ -373,11 +459,32 @@ type MainWindow() as this =
                     do! input.CopyToAsync(output)
 
                     Dispatcher.UIThread.Post(fun () ->
-                        postStatus $"Update downloaded: {fileName}" Positive
-                        revealDownloadedFile targetPath)
-                with _ ->
+                        match splash with
+                        | Some s -> s.SetStatus("Extrahiere Update...")
+                        | None -> postStatus "Extracting update..." Neutral)
+
+                    // If it's a zip, extract it
+                    let finalPath =
+                        if fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) then
+                            match extractAppFromZip targetPath with
+                            | Some appPath -> appPath
+                            | None -> targetPath
+                        else
+                            targetPath
+
                     Dispatcher.UIThread.Post(fun () ->
-                        postStatus $"Update available. Download manually: {releasesUrl}" Negative)
+                        match splash with
+                        | Some s -> s.Close()
+                        | None -> ()
+                        postStatus $"Update fertig: {Path.GetFileName(finalPath)}" Positive
+                        revealDownloadedFile finalPath)
+                with ex ->
+                    Dispatcher.UIThread.Post(fun () ->
+                        match splash with
+                        | Some s -> s.Close()
+                        | None -> ()
+                        postStatus $"Update verfügbar. Manuell herunterladen: {releasesUrl}" Negative
+                        Support.saveCrashReport ex |> ignore)
             }
             :> Task)
         |> ignore
@@ -389,10 +496,15 @@ type MainWindow() as this =
         postStatus msg Neutral
         this.Clipboard.SetTextAsync(releasesUrl) |> ignore
 
-    let checkForUpdates autoDownload =
+    let checkForUpdates autoDownload (splash: SplashWindow option) =
         Task.Run(fun () ->
             task {
                 try
+                    Dispatcher.UIThread.Post(fun () ->
+                        match splash with
+                        | Some s -> s.SetStatus("Prüfe neueste Version über GitHub Releases...")
+                        | None -> ())
+
                     let mode =
                         if String.IsNullOrWhiteSpace(updateTestMode) then ""
                         else updateTestMode.Trim().ToLowerInvariant()
@@ -401,6 +513,10 @@ type MainWindow() as this =
                         if not autoDownload then
                             Dispatcher.UIThread.Post(fun () -> postStatus "[TEST] Could not check updates right now" Negative)
                     elif mode = "latest" then
+                        Dispatcher.UIThread.Post(fun () ->
+                            match splash with
+                            | Some s -> s.SetStatus("[TEST] Bereits auf der neuesten Version.")
+                            | None -> ())
                         if not autoDownload then
                             Dispatcher.UIThread.Post(fun () -> postStatus "[TEST] You are on the latest version" Positive)
                     elif mode = "available" then
@@ -408,13 +524,26 @@ type MainWindow() as this =
                         if autoDownload then
                             let fakeName = "holiday-scheduler-demonstrator-test-update.zip"
                             let fakeUrl = "https://github.com/seb-ster/Holiday-scheduler-ai-/releases/latest"
-                            Dispatcher.UIThread.Post(fun () -> postStatus "[TEST] Update found. Downloading..." Neutral)
-                            downloadLatestAsset fakeTag fakeName fakeUrl
+                            Dispatcher.UIThread.Post(fun () ->
+                                match splash with
+                                | Some s -> s.SetStatus("[TEST] Update gefunden. Wird heruntergeladen...")
+                                | None -> postStatus "[TEST] Update found. Downloading..." Neutral)
+                            downloadLatestAsset fakeTag fakeName fakeUrl splash
                         else
                             Dispatcher.UIThread.Post(fun () -> showDownloadLocation fakeTag)
                     else
+                        Dispatcher.UIThread.Post(fun () ->
+                            match splash with
+                            | Some s -> s.SetStatus("Verbinde zu GitHub API...")
+                            | None -> ())
+
                         use client = new HttpClient()
                         client.DefaultRequestHeaders.UserAgent.ParseAdd("HolidaySchedulerDemonstrator/1.0")
+
+                        Dispatcher.UIThread.Post(fun () ->
+                            match splash with
+                            | Some s -> s.SetStatus("Lade Release-Informationen...")
+                            | None -> ())
 
                         let! payload = client.GetStringAsync(latestReleaseApi)
                         use doc = JsonDocument.Parse(payload)
@@ -429,21 +558,45 @@ type MainWindow() as this =
 
                             match currentVersion, latestVersion with
                             | Some current, Some latest when latest > current ->
+                                Dispatcher.UIThread.Post(fun () ->
+                                    match splash with
+                                    | Some s -> s.SetStatus($"Neue Version gefunden: {latestTag}")
+                                    | None -> ())
                                 if autoDownload then
                                     match trySelectDownloadAsset doc.RootElement with
                                     | Some (assetName, assetUrl) ->
-                                        Dispatcher.UIThread.Post(fun () -> postStatus "Update found. Downloading..." Neutral)
-                                        downloadLatestAsset latestTag assetName assetUrl
+                                        Dispatcher.UIThread.Post(fun () ->
+                                            match splash with
+                                            | Some s -> s.SetStatus("Update gefunden. Wird heruntergeladen...")
+                                            | None -> postStatus "Update found. Downloading..." Neutral)
+                                        downloadLatestAsset latestTag assetName assetUrl splash
                                     | None ->
-                                        Dispatcher.UIThread.Post(fun () -> showDownloadLocation latestTag)
+                                        Dispatcher.UIThread.Post(fun () ->
+                                            match splash with
+                                            | Some s -> s.Close()
+                                            | None -> ()
+                                            showDownloadLocation latestTag)
                                 else
                                     Dispatcher.UIThread.Post(fun () -> showDownloadLocation latestTag)
                             | _ ->
-                                if not autoDownload then
-                                    Dispatcher.UIThread.Post(fun () -> postStatus "You are on the latest version" Positive)
-                with _ ->
-                    if not autoDownload then
-                        Dispatcher.UIThread.Post(fun () -> postStatus "Could not check updates right now" Negative)
+                                Dispatcher.UIThread.Post(fun () ->
+                                    match splash with
+                                    | Some s ->
+                                        s.SetStatus("Keine neuere Version gefunden.")
+                                        s.Close()
+                                    | None -> ()
+                                    if not autoDownload then
+                                        postStatus "Sie haben die neueste Version" Positive)
+                with ex ->
+                    Dispatcher.UIThread.Post(fun () ->
+                        match splash with
+                        | Some s ->
+                            s.SetStatus("Update-Prüfung fehlgeschlagen.")
+                            s.Close()
+                        | None -> ()
+                        if not autoDownload then
+                            postStatus "Update-Prüfung jetzt nicht möglich" Negative
+                        Support.saveCrashReport ex |> ignore)
             }
             :> Task)
         |> ignore
@@ -493,11 +646,11 @@ type MainWindow() as this =
         let updatesSubmenu = NativeMenu()
 
         let checkUpdatesItem = NativeMenuItem("Check for Updates")
-        checkUpdatesItem.Click.Add(fun _ -> checkForUpdates false)
+        checkUpdatesItem.Click.Add(fun _ -> checkForUpdates false None)
         updatesSubmenu.Add(checkUpdatesItem)
 
         let downloadUpdateItem = NativeMenuItem("Download Latest Update")
-        downloadUpdateItem.Click.Add(fun _ -> checkForUpdates true)
+        downloadUpdateItem.Click.Add(fun _ -> checkForUpdates true None)
         updatesSubmenu.Add(downloadUpdateItem)
 
         let releasesItem = NativeMenuItem("Show Download Location")
@@ -761,7 +914,7 @@ type MainWindow() as this =
         selectYear selectedIndex false
         isInitialized <- true
         configureNativeMainMenu ()
-        checkForUpdates true
+        checkForUpdates true splash
         
         // Load preference for "Don't show on startup"
         let prefFile = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData), "HolidayScheduler", "prefs.txt")

@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="HolidayScheduler.Gui.SplashWindow"
-        Width="420" Height="260"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  x:Class="HolidayScheduler.Gui.SplashWindow"
+  Width="460" Height="320"
         SystemDecorations="None"
         CanResize="False"
         Background="#FFFAFAFC"
@@ -14,7 +14,7 @@
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
         <!-- Simple vector logo -->
         <Canvas Width="96" Height="96">
           <Ellipse Width="96" Height="96" Fill="#3F51B5" />
@@ -23,7 +23,15 @@
 
         <TextBlock Text="Holiday Scheduler" FontSize="20" FontWeight="Bold" Foreground="#222222" HorizontalAlignment="Center"/>
         <TextBlock x:Name="SplashVersionText" Text="Version 1.0.0" FontSize="12" Foreground="#666666" HorizontalAlignment="Center"/>
-        <TextBlock x:Name="SplashStatusText" Text="Starte und prüfe auf Aktualisierungen..." FontSize="12" Foreground="#555555" HorizontalAlignment="Center"/>
+        <Border Width="390" Height="86" Background="#F4F7FF" BorderBrush="#D7E0F4" BorderThickness="1" CornerRadius="6" Padding="8">
+          <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <TextBlock x:Name="SplashStatusText"
+                       Text="Starte und prüfe auf Aktualisierungen..."
+                       FontSize="12"
+                       Foreground="#334155"
+                       TextWrapping="Wrap" />
+          </ScrollViewer>
+        </Border>
       </StackPanel>
 
       <ProgressBar x:Name="SplashProgressBar" Grid.Row="1" IsIndeterminate="False" Minimum="0" Maximum="100" Value="10" Height="6" Margin="0,18,0,0" Foreground="#3F51B5" />
