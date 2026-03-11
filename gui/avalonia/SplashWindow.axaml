@@ -22,10 +22,11 @@
         </Canvas>
 
         <TextBlock Text="Holiday Scheduler" FontSize="20" FontWeight="Bold" Foreground="#222222" HorizontalAlignment="Center"/>
-        <TextBlock Text="Starting up…" FontSize="12" Foreground="#555555" HorizontalAlignment="Center"/>
+        <TextBlock x:Name="SplashVersionText" Text="Version 1.0.0" FontSize="12" Foreground="#666666" HorizontalAlignment="Center"/>
+        <TextBlock x:Name="SplashStatusText" Text="Starte und prüfe auf Aktualisierungen..." FontSize="12" Foreground="#555555" HorizontalAlignment="Center"/>
       </StackPanel>
 
-      <ProgressBar Grid.Row="1" IsIndeterminate="True" Height="6" Margin="0,18,0,0" Foreground="#3F51B5" />
+      <ProgressBar x:Name="SplashProgressBar" Grid.Row="1" IsIndeterminate="False" Minimum="0" Maximum="100" Value="10" Height="6" Margin="0,18,0,0" Foreground="#3F51B5" />
     </Grid>
   </Border>
 </Window>

@@ -8,8 +8,8 @@ PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_FILE="$PROJECT_DIR/HolidayScheduler.Gui.fsproj"
 DIST_ROOT="$PROJECT_DIR/../../dist"
 
-APP_NAME="${APP_NAME:-holiday demonstrator}"
-APP_ID="${APP_ID:-com.sebastiaan.holidaydemonstrator}"
+APP_NAME="${APP_NAME:-Holiday Scheduler Demonstrator}"
+APP_ID="${APP_ID:-com.sebastiaan.holidayschedulerdemonstrator}"
 TARGETS="${1:-all}"
 
 sanitize_name() {

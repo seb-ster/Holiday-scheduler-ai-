@@ -22,14 +22,14 @@ Build only selected targets:
 ```
 
 Outputs are written under `dist/`:
-- `dist/holiday demonstrator.app` and `dist/holiday-demonstrator-macos-arm64.zip`
+- `dist/Holiday Scheduler Demonstrator.app` and `dist/holiday-scheduler-demonstrator-macos-arm64.zip`
 - `dist/win-x64/HolidayScheduler.Gui.exe`
 - `dist/linux-x64/HolidayScheduler.Gui`
 
 You can override app metadata with environment variables:
 
 ```bash
-APP_NAME="holiday demonstrator" APP_ID="com.example.holidaydemonstrator" ./release_all.sh
+APP_NAME="Holiday Scheduler Demonstrator" APP_ID="com.example.holidayschedulerdemonstrator" ./release_all.sh
 ```
 
 Note: code signing and notarization are still required for trusted macOS distribution.

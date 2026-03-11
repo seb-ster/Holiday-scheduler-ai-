@@ -2,14 +2,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="HolidayScheduler.Gui.App">
   <Application.Resources>
-    <Color x:Key="PrimaryColor">#0A84FF</Color>
-    <Color x:Key="PrimaryContainerColor">#EAF3FF</Color>
+    <!-- X-Plane 12 Theme: Dark with Cyan accents -->
+    <Color x:Key="PrimaryColor">#3A3A4A</Color>
+    <Color x:Key="PrimaryContainerColor">#EBEBEE</Color>
     <Color x:Key="OnPrimaryColor">#FFFFFF</Color>
-    <Color x:Key="AccentColor">#6E6E73</Color>
-    <Color x:Key="BackgroundColor">#F5F5F7</Color>
+    <Color x:Key="AccentColor">#6A6A7A</Color>
+    <Color x:Key="BackgroundColor">#0B1929</Color>
     <Color x:Key="SurfaceColor">#FFFFFF</Color>
-    <Color x:Key="SurfaceMutedColor">#F2F2F4</Color>
-    <Color x:Key="OutlineColor">#B8B8B8</Color>
+    <Color x:Key="SurfaceMutedColor">#EBEBEE</Color>
+    <Color x:Key="OutlineColor">#D0D0D8</Color>
+    <Color x:Key="TextPrimary">#1A1A1E</Color>
+    <Color x:Key="TextSecondary">#6A6A7A</Color>
 
     <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource PrimaryColor}" />
     <SolidColorBrush x:Key="PrimaryContainerBrush" Color="{DynamicResource PrimaryContainerColor}" />
@@ -19,6 +22,8 @@
     <SolidColorBrush x:Key="SurfaceBrush" Color="{DynamicResource SurfaceColor}" />
     <SolidColorBrush x:Key="SurfaceMutedBrush" Color="{DynamicResource SurfaceMutedColor}" />
     <SolidColorBrush x:Key="OutlineBrush" Color="{DynamicResource OutlineColor}" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{DynamicResource TextPrimary}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{DynamicResource TextSecondary}" />
   </Application.Resources>
 
   <Application.Styles>
@@ -27,6 +32,7 @@
     <Style Selector="Window">
       <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
       <Setter Property="FontFamily" Value="-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue, sans-serif" />
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     </Style>
 
     <Style Selector="TextBlock.headline">
@@ -51,19 +57,21 @@
       <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
       <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
       <Setter Property="CornerRadius" Value="8" />
-      <Setter Property="Padding" Value="12,7" />
+      <Setter Property="Padding" Value="14,8" />
       <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="FontSize" Value="13" />
     </Style>
 
     <Style Selector="Button.tonal">
       <Setter Property="Background" Value="{DynamicResource SurfaceMutedBrush}" />
-      <Setter Property="Foreground" Value="#1D1D1F" />
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
       <Setter Property="CornerRadius" Value="8" />
-      <Setter Property="Padding" Value="12,7" />
+      <Setter Property="Padding" Value="14,8" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="BorderBrush" Value="{DynamicResource OutlineBrush}" />
       <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="FontSize" Value="13" />
     </Style>
 
     <Style Selector="TabStripItem">

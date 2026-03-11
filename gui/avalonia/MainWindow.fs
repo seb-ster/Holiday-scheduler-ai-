@@ -3,13 +3,22 @@ namespace HolidayScheduler.Gui
 open Avalonia.Controls
 open Avalonia.Controls.Primitives
 open Avalonia.Controls.Shapes
+open Avalonia.Input
+open Avalonia.Interactivity
 open Avalonia.Markup.Xaml
 open Avalonia.Media
 open Avalonia.Threading
 open Avalonia.VisualTree
 open System
 open System.Collections.ObjectModel
+open System.Diagnostics
 open System.Globalization
+open System.Net.Http
+open System.IO
+open System.Reflection
+open System.Runtime.InteropServices
+open System.Text.Json
+open System.Threading.Tasks
 
 type RosterDayRow() =
     member val DayLabel = "" with get, set
@@ -62,12 +71,19 @@ type StatusTone =
 type MainWindow() as this =
     inherit Window()
 
+    let releasesUrl = "https://github.com/seb-ster/Holiday-scheduler-ai-/releases"
+    let latestReleaseApi = "https://api.github.com/repos/seb-ster/Holiday-scheduler-ai-/releases/latest"
+    let updateTestMode = Environment.GetEnvironmentVariable("HOLIDAY_UPDATE_TEST_MODE")
+
     let currentYear = DateTime.Now.Year
     let years = ObservableCollection<YearRosterView>()
     let mutable selectedIndex = 2
     let mutable isSelecting = false
     let mutable isInitialized = false
     let mutable yearLabel: TextBlock option = None
+    let mutable updateTestModeBadge: Border option = None
+    let mutable updateTestModeBadgeText: TextBlock option = None
+    let mutable updateTestModeHelpText: TextBlock option = None
     let mutable yearTabStrip: TabStrip option = None
     let mutable yearContent: ContentControl option = None
     let mutable statusBar: Border option = None
@@ -78,8 +94,21 @@ type MainWindow() as this =
     let mutable statusProgressFill: Rectangle option = None
     let mutable statusCloseButton: Border option = None
     let mutable statusCloseLabel: TextBlock option = None
+    let mutable mainMenuOverlay: Border option = None
+    let mutable mainMenuCloseButton: Button option = None
+    let mutable importRosterButton: Button option = None
+    let mutable importRequestsButton: Button option = None
+    let mutable importConstraintsButton: Button option = None
+    let mutable startFreshButton: Button option = None
+    let mutable feedbackButton: Button option = None
+    let mutable mainMenuPanel: Border option = None
+    let mutable isMainMenuAnimating = false
     let mutable hasDiscoveredHighlight = false
     let mutable currentRosterListBox: ListBox option = None
+    let mutable quitButton: Button option = None
+    let mutable dontShowOnStartupCheckBox: CheckBox option = None
+    let mutable showMainMenuOnStartup = true
+    let mutable postStatus: (string -> StatusTone -> unit) = fun _ _ -> ()
 
     let monthName month =
         CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames[month - 1]
@@ -90,10 +119,10 @@ type MainWindow() as this =
 
     let translationForStatus status =
         match status with
-        | "Vacaciones" -> "Deutsch: Urlaub"
-        | "Conge" -> "Deutsch: Urlaub"
-        | "Ferie" -> "Deutsch: Urlaub"
-        | "Riposo" -> "Deutsch: Ruhetag"
+        | "Vacaciones" -> "Vacaciones: Urlaub"
+        | "Conge" -> "Congé: Urlaub"
+        | "Ferie" -> "Ferie: Urlaub"
+        | "Riposo" -> "Riposo: Ruhetag"
         | _ -> ""
 
     let sampleForeignStatus year month day =
@@ -158,6 +187,9 @@ type MainWindow() as this =
 
     do
         yearLabel <- Some(this.FindControl<TextBlock>("YearLabel"))
+        updateTestModeBadge <- Some(this.FindControl<Border>("UpdateTestModeBadge"))
+        updateTestModeBadgeText <- Some(this.FindControl<TextBlock>("UpdateTestModeBadgeText"))
+        updateTestModeHelpText <- Some(this.FindControl<TextBlock>("UpdateTestModeHelpText"))
         yearTabStrip <- Some(this.FindControl<TabStrip>("YearTabStrip"))
         yearContent <- Some(this.FindControl<ContentControl>("YearContent"))
         statusBar <- Some(this.FindControl<Border>("StatusBar"))
@@ -166,6 +198,318 @@ type MainWindow() as this =
         statusProgressFill <- Some(this.FindControl<Rectangle>("StatusProgressFill"))
         statusCloseButton <- Some(this.FindControl<Border>("StatusCloseButton"))
         statusCloseLabel <- Some(this.FindControl<TextBlock>("StatusCloseLabel"))
+        mainMenuOverlay <- Some(this.FindControl<Border>("MainMenuOverlay"))
+        mainMenuCloseButton <- Some(this.FindControl<Button>("MainMenuCloseButton"))
+        importRosterButton <- Some(this.FindControl<Button>("ImportRosterButton"))
+        importRequestsButton <- Some(this.FindControl<Button>("ImportRequestsButton"))
+        importConstraintsButton <- Some(this.FindControl<Button>("ImportConstraintsButton"))
+        startFreshButton <- Some(this.FindControl<Button>("StartFreshButton"))
+        feedbackButton <- Some(this.FindControl<Button>("FeedbackButton"))
+        quitButton <- Some(this.FindControl<Button>("QuitButton"))
+        mainMenuPanel <- Some(this.FindControl<Border>("MainMenuPanel"))
+        dontShowOnStartupCheckBox <- Some(this.FindControl<CheckBox>("DontShowOnStartupCheckBox"))
+
+    do
+        let mode =
+            if String.IsNullOrWhiteSpace(updateTestMode) then ""
+            else updateTestMode.Trim().ToLowerInvariant()
+
+        let shouldShow = mode = "available" || mode = "latest" || mode = "offline"
+
+        match updateTestModeBadge with
+        | Some badge -> badge.IsVisible <- shouldShow
+        | None -> ()
+
+        match updateTestModeHelpText with
+        | Some help -> help.IsVisible <- shouldShow
+        | None -> ()
+
+        if shouldShow then
+            match updateTestModeBadgeText with
+            | Some label -> label.Text <- $"AKTUALISIERUNG TESTMODUS: {mode.ToUpperInvariant()}"
+            | None -> ()
+
+            match updateTestModeHelpText with
+            | Some help ->
+                help.Text <-
+                    $"Testmodus ({mode}) ist nur zum Ausprobieren vom Update-Ablauf. Im Normalmodus prüft die App echte Updates und lädt nur herunter, wenn wirklich eine neue Version verfügbar ist."
+            | None -> ()
+
+    let showMainMenu () =
+        if not isMainMenuAnimating then
+            isMainMenuAnimating <- true
+            match mainMenuOverlay, mainMenuPanel with
+            | Some overlay, Some panel ->
+                overlay.IsVisible <- true
+                panel.Opacity <- 0.0
+                let transform = TranslateTransform(0.0, 18.0)
+                panel.RenderTransform <- transform
+
+                let steps = 12
+                let mutable step = 0
+                let timer = DispatcherTimer()
+                timer.Interval <- TimeSpan.FromMilliseconds(16.0)
+                timer.Tick.Add(fun _ ->
+                    step <- step + 1
+                    let p = min 1.0 (float step / float steps)
+                    let eased = 1.0 - Math.Pow(1.0 - p, 3.0)
+                    panel.Opacity <- eased
+                    transform.Y <- 18.0 * (1.0 - eased)
+
+                    if step >= steps then
+                        panel.Opacity <- 1.0
+                        transform.Y <- 0.0
+                        isMainMenuAnimating <- false
+                        timer.Stop())
+                timer.Start()
+            | Some overlay, None ->
+                overlay.IsVisible <- true
+                isMainMenuAnimating <- false
+            | _ ->
+                isMainMenuAnimating <- false
+
+    let hideMainMenu () =
+        match mainMenuOverlay with
+        | Some overlay -> overlay.IsVisible <- false
+        | None -> ()
+
+    let normalizeVersion (raw: string) =
+        raw.Trim().TrimStart('v', 'V').Split('-')[0]
+
+    let tryGetStringProperty (name: string) (node: JsonElement) =
+        let mutable value = Unchecked.defaultof<JsonElement>
+
+        if node.TryGetProperty(name, &value) && value.ValueKind = JsonValueKind.String then
+            let content = value.GetString()
+            if String.IsNullOrWhiteSpace(content) then None else Some content
+        else
+            None
+
+    let tryParseVersion (raw: string) =
+        match Version.TryParse(normalizeVersion raw) with
+        | true, parsed -> Some parsed
+        | _ -> None
+
+    let currentVersionText () =
+        let version =
+            match Assembly.GetEntryAssembly() with
+            | null -> Version(1, 0, 0)
+            | asm ->
+                match asm.GetName().Version with
+                | null -> Version(1, 0, 0)
+                | v -> v
+
+        $"{version.Major}.{version.Minor}.{version.Build}"
+
+    let trySelectDownloadAsset (root: JsonElement) =
+        let mutable assets = Unchecked.defaultof<JsonElement>
+
+        if root.TryGetProperty("assets", &assets) && assets.ValueKind = JsonValueKind.Array then
+            let candidates =
+                assets.EnumerateArray()
+                |> Seq.choose (fun asset ->
+                    match tryGetStringProperty "name" asset, tryGetStringProperty "browser_download_url" asset with
+                    | Some name, Some url -> Some (name, url)
+                    | _ -> None)
+                |> Seq.toList
+
+            let preferred =
+                candidates
+                |> List.tryFind (fun (name, _) ->
+                    name.Contains("macos", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("osx", StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase))
+
+            match preferred with
+            | Some asset -> Some asset
+            | None -> candidates |> List.tryHead
+        else
+            None
+
+    let revealDownloadedFile (path: string) =
+        try
+            if RuntimeInformation.IsOSPlatform(OSPlatform.OSX) then
+                let psi = ProcessStartInfo("open")
+                psi.ArgumentList.Add("-R")
+                psi.ArgumentList.Add(path)
+                psi.UseShellExecute <- false
+                Process.Start(psi) |> ignore
+            elif RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+                let psi = ProcessStartInfo("explorer.exe")
+                psi.ArgumentList.Add("/select,")
+                psi.ArgumentList.Add(path)
+                psi.UseShellExecute <- false
+                Process.Start(psi) |> ignore
+            else
+                let folder = Path.GetDirectoryName(path)
+                if not (String.IsNullOrWhiteSpace(folder)) then
+                    let psi = ProcessStartInfo("xdg-open")
+                    psi.ArgumentList.Add(folder)
+                    psi.UseShellExecute <- false
+                    Process.Start(psi) |> ignore
+        with _ ->
+            ()
+
+    let downloadLatestAsset (latestTag: string) (assetName: string) (assetUrl: string) =
+        Task.Run(fun () ->
+            task {
+                try
+                    let downloadDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")
+                    Directory.CreateDirectory(downloadDir) |> ignore
+
+                    let fallbackName = $"holiday-scheduler-demonstrator-{normalizeVersion latestTag}.zip"
+                    let fileName = if String.IsNullOrWhiteSpace(assetName) then fallbackName else assetName
+                    let targetPath = Path.Combine(downloadDir, fileName)
+
+                    use client = new HttpClient()
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("HolidaySchedulerDemonstrator/1.0")
+
+                    use! response = client.GetAsync(assetUrl)
+                    response.EnsureSuccessStatusCode()
+
+                    use! input = response.Content.ReadAsStreamAsync()
+                    use output = File.Create(targetPath)
+                    do! input.CopyToAsync(output)
+
+                    Dispatcher.UIThread.Post(fun () ->
+                        postStatus $"Update downloaded: {fileName}" Positive
+                        revealDownloadedFile targetPath)
+                with _ ->
+                    Dispatcher.UIThread.Post(fun () ->
+                        postStatus $"Update available. Download manually: {releasesUrl}" Negative)
+            }
+            :> Task)
+        |> ignore
+
+    let showDownloadLocation latestTag =
+        let msg =
+            $"Update available ({currentVersionText()} -> {latestTag}). Download: {releasesUrl}"
+
+        postStatus msg Neutral
+        this.Clipboard.SetTextAsync(releasesUrl) |> ignore
+
+    let checkForUpdates autoDownload =
+        Task.Run(fun () ->
+            task {
+                try
+                    let mode =
+                        if String.IsNullOrWhiteSpace(updateTestMode) then ""
+                        else updateTestMode.Trim().ToLowerInvariant()
+
+                    if mode = "offline" then
+                        if not autoDownload then
+                            Dispatcher.UIThread.Post(fun () -> postStatus "[TEST] Could not check updates right now" Negative)
+                    elif mode = "latest" then
+                        if not autoDownload then
+                            Dispatcher.UIThread.Post(fun () -> postStatus "[TEST] You are on the latest version" Positive)
+                    elif mode = "available" then
+                        let fakeTag = "v9.9.9"
+                        if autoDownload then
+                            let fakeName = "holiday-scheduler-demonstrator-test-update.zip"
+                            let fakeUrl = "https://github.com/seb-ster/Holiday-scheduler-ai-/releases/latest"
+                            Dispatcher.UIThread.Post(fun () -> postStatus "[TEST] Update found. Downloading..." Neutral)
+                            downloadLatestAsset fakeTag fakeName fakeUrl
+                        else
+                            Dispatcher.UIThread.Post(fun () -> showDownloadLocation fakeTag)
+                    else
+                        use client = new HttpClient()
+                        client.DefaultRequestHeaders.UserAgent.ParseAdd("HolidaySchedulerDemonstrator/1.0")
+
+                        let! payload = client.GetStringAsync(latestReleaseApi)
+                        use doc = JsonDocument.Parse(payload)
+
+                        let latestTag = doc.RootElement.GetProperty("tag_name").GetString()
+
+                        if String.IsNullOrWhiteSpace(latestTag) then
+                            ()
+                        else
+                            let latestVersion = tryParseVersion latestTag
+                            let currentVersion = tryParseVersion (currentVersionText())
+
+                            match currentVersion, latestVersion with
+                            | Some current, Some latest when latest > current ->
+                                if autoDownload then
+                                    match trySelectDownloadAsset doc.RootElement with
+                                    | Some (assetName, assetUrl) ->
+                                        Dispatcher.UIThread.Post(fun () -> postStatus "Update found. Downloading..." Neutral)
+                                        downloadLatestAsset latestTag assetName assetUrl
+                                    | None ->
+                                        Dispatcher.UIThread.Post(fun () -> showDownloadLocation latestTag)
+                                else
+                                    Dispatcher.UIThread.Post(fun () -> showDownloadLocation latestTag)
+                            | _ ->
+                                if not autoDownload then
+                                    Dispatcher.UIThread.Post(fun () -> postStatus "You are on the latest version" Positive)
+                with _ ->
+                    if not autoDownload then
+                        Dispatcher.UIThread.Post(fun () -> postStatus "Could not check updates right now" Negative)
+            }
+            :> Task)
+        |> ignore
+
+    let configureNativeMainMenu () =
+        let root = NativeMenu()
+        
+        // Main Menu item
+        let menuRoot = NativeMenuItem("Main Menu")
+        let menuSubmenu = NativeMenu()
+        let openItem = NativeMenuItem("Open Main Menu")
+        openItem.Gesture <- KeyGesture.Parse("Meta+M")
+        openItem.Click.Add(fun _ -> showMainMenu())
+        menuSubmenu.Add(openItem)
+        menuRoot.Menu <- menuSubmenu
+        root.Add(menuRoot)
+        
+        // Import Menu item with submenu
+        let importMenuRoot = NativeMenuItem("Import")
+        let importSubmenu = NativeMenu()
+        
+        let importRosterItem = NativeMenuItem("Import Roster...")
+        importRosterItem.Click.Add(fun _ ->
+            match importRosterButton with
+            | Some btn -> btn.RaiseEvent(RoutedEventArgs(Button.ClickEvent))
+            | None -> ())
+        importSubmenu.Add(importRosterItem)
+        
+        let importRequestsItem = NativeMenuItem("Import Requests...")
+        importRequestsItem.Click.Add(fun _ ->
+            match importRequestsButton with
+            | Some btn -> btn.RaiseEvent(RoutedEventArgs(Button.ClickEvent))
+            | None -> ())
+        importSubmenu.Add(importRequestsItem)
+        
+        let importConstraintsItem = NativeMenuItem("Import Constraints...")
+        importConstraintsItem.Click.Add(fun _ ->
+            match importConstraintsButton with
+            | Some btn -> btn.RaiseEvent(RoutedEventArgs(Button.ClickEvent))
+            | None -> ())
+        importSubmenu.Add(importConstraintsItem)
+        
+        importMenuRoot.Menu <- importSubmenu
+        root.Add(importMenuRoot)
+
+        let updatesRoot = NativeMenuItem("Updates")
+        let updatesSubmenu = NativeMenu()
+
+        let checkUpdatesItem = NativeMenuItem("Check for Updates")
+        checkUpdatesItem.Click.Add(fun _ -> checkForUpdates false)
+        updatesSubmenu.Add(checkUpdatesItem)
+
+        let downloadUpdateItem = NativeMenuItem("Download Latest Update")
+        downloadUpdateItem.Click.Add(fun _ -> checkForUpdates true)
+        updatesSubmenu.Add(downloadUpdateItem)
+
+        let releasesItem = NativeMenuItem("Show Download Location")
+        releasesItem.Click.Add(fun _ ->
+            postStatus $"Download location: {releasesUrl}" Neutral
+            this.Clipboard.SetTextAsync(releasesUrl) |> ignore)
+        updatesSubmenu.Add(releasesItem)
+
+        updatesRoot.Menu <- updatesSubmenu
+        root.Add(updatesRoot)
+        
+        NativeMenu.SetMenu(this, root)
 
     let yearTab0 = this.FindControl<TabStripItem>("YearTab0")
     let yearTab1 = this.FindControl<TabStripItem>("YearTab1")
@@ -216,7 +560,7 @@ type MainWindow() as this =
         | Some fill -> fill.Fill <- SolidColorBrush(Color.Parse(progressHex))
         | None -> ()
 
-    let selectYear index =
+    let selectYear index animate =
         if not isSelecting then
             isSelecting <- true
 
@@ -229,30 +573,35 @@ type MainWindow() as this =
 
                 match yearContent with
                 | Some content ->
-                    let direction = if index >= previousIndex then 1.0 else -1.0
-                    let width = if content.Bounds.Width > 0.0 then content.Bounds.Width else 1000.0
-                    let startX = (max 260.0 (width * 0.55)) * direction
-                    let transform = TranslateTransform(startX, 0.0)
-                    content.RenderTransform <- transform
-                    content.Opacity <- 0.62
                     content.Content <- years[index]
 
-                    let steps = 13
-                    let mutable currentStep = 0
-                    let slideTimer = DispatcherTimer()
-                    slideTimer.Interval <- TimeSpan.FromMilliseconds(16.0)
-                    slideTimer.Tick.Add(fun _ ->
-                        currentStep <- currentStep + 1
-                        let p = min 1.0 (float currentStep / float steps)
-                        let eased = 1.0 - Math.Pow(1.0 - p, 3.0)
-                        transform.X <- startX * (1.0 - eased)
-                        content.Opacity <- 0.62 + (0.38 * eased)
+                    if animate then
+                        let direction = if index >= previousIndex then 1.0 else -1.0
+                        let width = if content.Bounds.Width > 0.0 then content.Bounds.Width else 1000.0
+                        let startX = (max 260.0 (width * 0.55)) * direction
+                        let transform = TranslateTransform(startX, 0.0)
+                        content.RenderTransform <- transform
+                        content.Opacity <- 0.62
 
-                        if currentStep >= steps then
-                            transform.X <- 0.0
-                            content.Opacity <- 1.0
-                            slideTimer.Stop())
-                    slideTimer.Start()
+                        let steps = 13
+                        let mutable currentStep = 0
+                        let slideTimer = DispatcherTimer()
+                        slideTimer.Interval <- TimeSpan.FromMilliseconds(16.0)
+                        slideTimer.Tick.Add(fun _ ->
+                            currentStep <- currentStep + 1
+                            let p = min 1.0 (float currentStep / float steps)
+                            let eased = 1.0 - Math.Pow(1.0 - p, 3.0)
+                            transform.X <- startX * (1.0 - eased)
+                            content.Opacity <- 0.62 + (0.38 * eased)
+
+                            if currentStep >= steps then
+                                transform.X <- 0.0
+                                content.Opacity <- 1.0
+                                slideTimer.Stop())
+                        slideTimer.Start()
+                    else
+                        content.RenderTransform <- TranslateTransform(0.0, 0.0)
+                        content.Opacity <- 1.0
                 | None -> ()
 
                 updateYearLabel years[index].Year
@@ -347,6 +696,9 @@ type MainWindow() as this =
         statusTimer <- Some timer
         timer.Start()
 
+    do
+        postStatus <- showStatus
+
     let buildYearTabs () =
         years.Clear()
 
@@ -402,12 +754,30 @@ type MainWindow() as this =
                     let index = tabStrip.SelectedIndex
 
                     if index >= 0 && index < years.Count && index <> selectedIndex then
-                        selectYear index
+                        selectYear index true
                         attachRosterSelectionHandler ())
         | None -> ()
 
-        selectYear selectedIndex
+        selectYear selectedIndex false
         isInitialized <- true
+        configureNativeMainMenu ()
+        checkForUpdates true
+        
+        // Load preference for "Don't show on startup"
+        let prefFile = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData), "HolidayScheduler", "prefs.txt")
+        if System.IO.File.Exists(prefFile) then
+            let content = System.IO.File.ReadAllText(prefFile).Trim()
+            let isDontShow = (content = "1")
+            showMainMenuOnStartup <- not isDontShow
+            match dontShowOnStartupCheckBox with
+            | Some checkbox -> checkbox.IsChecked <- System.Nullable(isDontShow)
+            | None -> ()
+        else
+            showMainMenuOnStartup <- true
+        
+        // Show menu only if preference allows it
+        if showMainMenuOnStartup then
+            showMainMenu ()
 
         // Wire up status bar close button
         let closeButton = this.FindControl<Border>("StatusCloseButton")
@@ -422,7 +792,7 @@ type MainWindow() as this =
                 let todayIndex = years |> Seq.tryFindIndex (fun y -> y.Year = today.Year)
                 match todayIndex with
                 | Some index ->
-                    selectYear index
+                    selectYear index true
                     attachRosterSelectionHandler ()
                     Dispatcher.UIThread.Post((fun () ->
                         updateActiveMonthHighlight today.Month
@@ -447,5 +817,72 @@ type MainWindow() as this =
         let neutralButton = this.FindControl<Button>("StatusNeutralButton")
         if not (isNull neutralButton) then
             neutralButton.Click.Add(fun _ -> showStatus "Manual neutral status" Neutral)
+
+        match importRosterButton with
+        | Some btn ->
+            btn.Click.Add(fun _ ->
+                showStatus "Import roster: picker to be connected" Neutral
+                hideMainMenu ())
+        | None -> ()
+
+        match importRequestsButton with
+        | Some btn ->
+            btn.Click.Add(fun _ ->
+                showStatus "Import requests: picker to be connected" Neutral
+                hideMainMenu ())
+        | None -> ()
+
+        match importConstraintsButton with
+        | Some btn ->
+            btn.Click.Add(fun _ ->
+                showStatus "Import constraints: picker to be connected" Neutral
+                hideMainMenu ())
+        | None -> ()
+
+        match startFreshButton with
+        | Some btn -> btn.Click.Add(fun _ -> hideMainMenu ())
+        | None -> ()
+
+        match feedbackButton with
+        | Some btn ->
+            btn.Click.Add(fun _ ->
+                let dialog = FeedbackWindow(currentVersionText())
+
+                dialog.Submitted.Add(fun payload ->
+                    Task.Run(fun () ->
+                        task {
+                            let! path, sent = Support.saveFeedback payload
+                            Dispatcher.UIThread.Post(fun () ->
+                                if sent then
+                                    showStatus "Rückmeldung wurde gesendet. Danke!" Positive
+                                else
+                                    showStatus "Rückmeldung gespeichert. Sie kann bei Bedarf weitergegeben werden." Neutral
+                                    if not (String.IsNullOrWhiteSpace(path)) then
+                                        Support.revealPath path)
+                        }
+                        :> Task)
+                    |> ignore)
+
+                dialog.ShowDialog(this) |> ignore)
+        | None -> ()
+
+        match mainMenuCloseButton with
+        | Some btn -> btn.Click.Add(fun _ -> hideMainMenu ())
+        | None -> ()
+
+        match quitButton with
+        | Some btn -> btn.Click.Add(fun _ -> this.Close())
+        | None -> ()
+
+        match dontShowOnStartupCheckBox with
+        | Some checkbox ->
+            checkbox.IsCheckedChanged.Add(fun _ ->
+                let prefFile = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData), "HolidayScheduler", "prefs.txt")
+                let prefDir = System.IO.Path.GetDirectoryName(prefFile)
+                if not (System.IO.Directory.Exists(prefDir)) then
+                    System.IO.Directory.CreateDirectory(prefDir) |> ignore
+                let isChecked = checkbox.IsChecked.HasValue && checkbox.IsChecked.Value
+                System.IO.File.WriteAllText(prefFile, if isChecked then "1" else "0"))
+        | None -> ()
 
         attachRosterSelectionHandler ()

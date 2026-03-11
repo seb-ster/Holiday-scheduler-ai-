@@ -18,6 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="FeedbackWindow.fs" />
     <Compile Include="SplashWindow.fs" />
     <Compile Include="MainWindow.fs" />
     <Compile Include="App.fs" />

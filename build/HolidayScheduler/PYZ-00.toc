@@ -1,4 +1,5 @@
-('/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/build/HolidayScheduler/PYZ-00.pyz',
+('/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+ 'demonstrator/build/HolidayScheduler/PYZ-00.pyz',
  [('__future__',
    '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/__future__.py',
    'PYMODULE'),
@@ -34,25 +35,32 @@
    'PYMODULE'),
   ('agents', '-', 'PYMODULE'),
   ('agents.telemetry',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/agents/telemetry.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/agents/telemetry.py',
    'PYMODULE'),
   ('agents.threadagents',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/agents/threadagents/__init__.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/agents/threadagents/__init__.py',
    'PYMODULE'),
   ('agents.threadagents.base_agent',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/agents/threadagents/base_agent.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/agents/threadagents/base_agent.py',
    'PYMODULE'),
   ('agents.threadagents.manager',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/agents/threadagents/manager.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/agents/threadagents/manager.py',
    'PYMODULE'),
   ('agents.threadagents.run_agents',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/agents/threadagents/run_agents.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/agents/threadagents/run_agents.py',
    'PYMODULE'),
   ('agents.threadagents.thread_agent',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/agents/threadagents/thread_agent.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/agents/threadagents/thread_agent.py',
    'PYMODULE'),
   ('agents.ui_notifier',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/agents/ui_notifier.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/agents/ui_notifier.py',
    'PYMODULE'),
   ('argparse',
    '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py',
@@ -352,58 +360,76 @@
    '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pprint.py',
    'PYMODULE'),
   ('prometheus_client',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/__init__.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/__init__.py',
    'PYMODULE'),
   ('prometheus_client.asgi',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/asgi.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/asgi.py',
    'PYMODULE'),
   ('prometheus_client.context_managers',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/context_managers.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/context_managers.py',
    'PYMODULE'),
   ('prometheus_client.decorator',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/decorator.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/decorator.py',
    'PYMODULE'),
   ('prometheus_client.exposition',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/exposition.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/exposition.py',
    'PYMODULE'),
   ('prometheus_client.gc_collector',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/gc_collector.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/gc_collector.py',
    'PYMODULE'),
   ('prometheus_client.metrics',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/metrics.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/metrics.py',
    'PYMODULE'),
   ('prometheus_client.metrics_core',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/metrics_core.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/metrics_core.py',
    'PYMODULE'),
   ('prometheus_client.mmap_dict',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/mmap_dict.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/mmap_dict.py',
    'PYMODULE'),
   ('prometheus_client.openmetrics',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/openmetrics/__init__.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/openmetrics/__init__.py',
    'PYMODULE'),
   ('prometheus_client.openmetrics.exposition',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/openmetrics/exposition.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/openmetrics/exposition.py',
    'PYMODULE'),
   ('prometheus_client.platform_collector',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/platform_collector.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/platform_collector.py',
    'PYMODULE'),
   ('prometheus_client.process_collector',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/process_collector.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/process_collector.py',
    'PYMODULE'),
   ('prometheus_client.registry',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/registry.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/registry.py',
    'PYMODULE'),
   ('prometheus_client.samples',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/samples.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/samples.py',
    'PYMODULE'),
   ('prometheus_client.utils',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/utils.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/utils.py',
    'PYMODULE'),
   ('prometheus_client.validation',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/validation.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/validation.py',
    'PYMODULE'),
   ('prometheus_client.values',
-   '/Users/sebastiaanvanheerde/holiday-roster-ai/Holiday-scheduler-ai-/.venv-build/lib/python3.13/site-packages/prometheus_client/values.py',
+   '/Users/sebastiaanvanheerde/holiday-roster-ai/holiday planner '
+   'demonstrator/.venv-build/lib/python3.13/site-packages/prometheus_client/values.py',
    'PYMODULE'),
   ('py_compile',
    '/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/py_compile.py',
