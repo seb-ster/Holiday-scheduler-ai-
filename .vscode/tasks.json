@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build and Run Avalonia GUI",
+			"type": "shell",
+			"command": "dotnet build && dotnet run --project gui/avalonia/HolidayScheduler.Gui.fsproj",
+			"problemMatcher": [
+				"$msbuild"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Run Avalonia GUI",
+			"type": "shell",
+			"command": "dotnet run --project gui/avalonia/HolidayScheduler.Gui.fsproj",
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

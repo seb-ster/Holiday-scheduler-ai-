@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repo Churn Heatmap</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --line: #1f2937;
+      --bar: #60a5fa;
+      --bar2: #1d4ed8;
+    }
+    body { margin: 0; font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif; background: radial-gradient(circle at 20% 20%, #172554, var(--bg)); color: var(--text); }
+    .wrap { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
+    .card { background: linear-gradient(180deg, #111827, #0b1220); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: 0 20px 40px rgba(0,0,0,.35); }
+    h1 { margin: 0 0 6px; font-size: 26px; }
+    .sub { color: var(--muted); margin-bottom: 12px; }
+    .row { display: grid; grid-template-columns: 56px 1fr 90px 90px 90px; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid #132035; }
+    .row:first-of-type { border-top: none; }
+    .rank { color: #93c5fd; font-weight: 700; text-align: right; }
+    .file { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .barWrap { height: 10px; border-radius: 999px; background: #0b1324; border: 1px solid #1e2b43; overflow: hidden; }
+    .bar { height: 100%; background: linear-gradient(90deg, var(--bar), var(--bar2)); }
+    .num { text-align: right; font-variant-numeric: tabular-nums; color: #bfdbfe; }
+    .legend { display: flex; gap: 16px; color: var(--muted); margin-top: 10px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Repo Churn Heatmap</h1>
+      <div class="sub">Top changed files by total churn (adds + deletes), source-focused view</div>
+      <div id="chart"></div>
+      <div class="legend">
+        <div>Metric: <b>Churn = Added + Deleted</b></div>
+        <div>Scope: <b>gui, backend, agents, workflows, docs</b></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const data = [
+      { file: 'gui/avalonia/MainWindow.fs', total: 1279, add: 1160, del: 119 },
+      { file: 'gui/avalonia/MainWindow.axaml', total: 1025, add: 693, del: 332 },
+      { file: 'backend/package-lock.json', total: 831, add: 831, del: 0 },
+      { file: 'gui/avalonia/MainWindow.axaml.cs', total: 286, add: 143, del: 143 },
+      { file: 'CRASH_REPORTING_SETUP.md', total: 196, add: 196, del: 0 },
+      { file: 'gui/avalonia/App.axaml', total: 196, add: 153, del: 43 },
+      { file: 'BACKEND_DEPLOYMENT.md', total: 147, add: 147, del: 0 },
+      { file: 'gui/avalonia/Support.fs', total: 145, add: 136, del: 9 },
+      { file: 'gui/avalonia/release_all.sh', total: 132, add: 130, del: 2 },
+      { file: 'gui/avalonia/App.fs', total: 126, add: 103, del: 23 },
+      { file: 'agents/threadagents/thread_agent.py', total: 114, add: 114, del: 0 },
+      { file: 'agents/threadagents/manager.py', total: 97, add: 97, del: 0 },
+      { file: 'gui/avalonia/App.axaml.cs', total: 88, add: 44, del: 44 },
+      { file: '.github/workflows/build-release.yml', total: 87, add: 87, del: 0 },
+      { file: 'backend/server.js', total: 82, add: 82, del: 0 }
+    ];
+
+    const max = Math.max(...data.map(d => d.total));
+    const chart = document.getElementById('chart');
+
+    data.forEach((d, i) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `
+        <div class="rank">#${i + 1}</div>
+        <div>
+          <div class="file">${d.file}</div>
+          <div class="barWrap"><div class="bar" style="width:${(d.total / max) * 100}%"></div></div>
+        </div>
+        <div class="num">${d.total}</div>
+        <div class="num">+${d.add}</div>
+        <div class="num">-${d.del}</div>
+      `;
+      chart.appendChild(row);
+    });
+  </script>
+</body>
+</html>

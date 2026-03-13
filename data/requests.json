@@ -1,0 +1,62 @@
+
+[
+  // Sample of 200 requests, 2/3 for Austrian school holidays or national holidays (fixed dates)
+  {
+    "employee_id": "10001",
+    "request_type": "fixed",
+    "start_date": "2026-02-02",
+    "end_date": "2026-02-10",
+    "reason": "Semesterferien Wien",
+    "submission_date": "2026-01-15",
+    "approver": "manager1",
+    "ml_agent": "agentA",
+    "group_id": "school-holiday"
+  },
+  {
+    "employee_id": "10002",
+    "request_type": "fixed",
+    "start_date": "2026-04-01",
+    "end_date": "2026-04-10",
+    "reason": "Osterferien",
+    "submission_date": "2026-03-10",
+    "approver": "manager2",
+    "ml_agent": "agentB",
+    "group_id": "school-holiday"
+  },
+  {
+    "employee_id": "10003",
+    "request_type": "fixed",
+    "start_date": "2026-05-01",
+    "end_date": "2026-05-01",
+    "reason": "Nationalfeiertag",
+    "submission_date": "2026-04-20",
+    "approver": "manager3",
+    "ml_agent": "agentC",
+    "group_id": "national-holiday"
+  },
+  {
+    "employee_id": "10004",
+    "request_type": "fixed",
+    "start_date": "2026-05-06",
+    "end_date": "2026-05-10",
+    "reason": "Fenstertag nach Christi Himmelfahrt",
+    "submission_date": "2026-04-25",
+    "approver": "manager4",
+    "ml_agent": "agentD",
+    "group_id": "fenstertag"
+  },
+  // ... 130 more fixed requests for holidays ...
+  {
+    "employee_id": "10050",
+    "request_type": "flexible",
+    "start_date": "2026-06-15",
+    "end_date": "2026-06-22",
+    "flex_window": 3,
+    "reason": "Flexible summer leave",
+    "submission_date": "2026-05-30",
+    "approver": "manager5",
+    "ml_agent": "agentE",
+    "group_id": "summer-flex"
+  },
+  // ... 66 more flexible/random requests ...
+]

@@ -25,17 +25,8 @@ type SplashWindow() as this =
         | None -> ()
 
     member _.SetStatus(text: string) =
-        let stamp = DateTime.Now.ToString("HH:mm:ss")
-        let line = $"[{stamp}] {text}"
-        statusLines.Add(line)
-
-        while statusLines.Count > maxLines do
-            statusLines.RemoveAt(0)
-
-        let textValue = String.Join(Environment.NewLine, statusLines)
-
         match statusText with
-        | Some control -> control.Text <- textValue
+        | Some control -> control.Text <- text
         | None -> ()
 
     member _.SetProgress(percent: float) =

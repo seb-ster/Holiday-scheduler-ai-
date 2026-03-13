@@ -46,6 +46,9 @@ build_macos() {
   local out_dir="$DIST_ROOT/$rid"
   local app_dir="$DIST_ROOT/$APP_NAME.app"
   local zip_file="$DIST_ROOT/${SLUG_NAME}-macos-arm64.zip"
+  local icon_svg="$PROJECT_DIR/roster-icon.svg"
+  local iconset_dir="$DIST_ROOT/AppIcon.iconset"
+  local icon_icns="$app_dir/Contents/Resources/AppIcon.icns"
   local binary_src="$out_dir/HolidayScheduler.Gui"
   local binary_dst="$app_dir/Contents/MacOS/$APP_NAME"
 
@@ -76,6 +79,8 @@ build_macos() {
   <string>1.0.0</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
   <key>LSMinimumSystemVersion</key>
   <string>12.0</string>
   <key>NSHighResolutionCapable</key>
@@ -83,6 +88,36 @@ build_macos() {
 </dict>
 </plist>
 PLIST
+
+  # Build a native .icns file so Finder/Spotlight show a proper macOS app icon.
+  if command -v qlmanage >/dev/null 2>&1 && command -v sips >/dev/null 2>&1 && command -v iconutil >/dev/null 2>&1 && [[ -f "$icon_svg" ]]; then
+    local tmp_png="$DIST_ROOT/app-icon-1024.png"
+    rm -rf "$iconset_dir"
+    mkdir -p "$iconset_dir"
+
+    qlmanage -t -s 1024 -o "$DIST_ROOT" "$icon_svg" >/dev/null 2>&1 || true
+
+    if [[ -f "$DIST_ROOT/roster-icon.svg.png" ]]; then
+      mv "$DIST_ROOT/roster-icon.svg.png" "$tmp_png"
+    elif [[ -f "$DIST_ROOT/roster-icon.png" ]]; then
+      mv "$DIST_ROOT/roster-icon.png" "$tmp_png"
+    fi
+
+    if [[ -f "$tmp_png" ]]; then
+      sips -z 16 16     "$tmp_png" --out "$iconset_dir/icon_16x16.png" >/dev/null 2>&1
+      sips -z 32 32     "$tmp_png" --out "$iconset_dir/icon_16x16@2x.png" >/dev/null 2>&1
+      sips -z 32 32     "$tmp_png" --out "$iconset_dir/icon_32x32.png" >/dev/null 2>&1
+      sips -z 64 64     "$tmp_png" --out "$iconset_dir/icon_32x32@2x.png" >/dev/null 2>&1
+      sips -z 128 128   "$tmp_png" --out "$iconset_dir/icon_128x128.png" >/dev/null 2>&1
+      sips -z 256 256   "$tmp_png" --out "$iconset_dir/icon_128x128@2x.png" >/dev/null 2>&1
+      sips -z 256 256   "$tmp_png" --out "$iconset_dir/icon_256x256.png" >/dev/null 2>&1
+      sips -z 512 512   "$tmp_png" --out "$iconset_dir/icon_256x256@2x.png" >/dev/null 2>&1
+      sips -z 512 512   "$tmp_png" --out "$iconset_dir/icon_512x512.png" >/dev/null 2>&1
+      cp "$tmp_png" "$iconset_dir/icon_512x512@2x.png"
+
+      iconutil -c icns "$iconset_dir" -o "$icon_icns" >/dev/null 2>&1 || true
+    fi
+  fi
 
   plutil -lint "$app_dir/Contents/Info.plist" >/dev/null
   rm -f "$zip_file"

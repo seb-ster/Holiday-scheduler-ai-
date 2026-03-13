@@ -6,15 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.0.0" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.0.0" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.0" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.0" />
+    <PackageReference Include="Avalonia" Version="11.2.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.0" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.0" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="roster-icon.svg" />
     <AvaloniaResource Include="pin-icon.svg" />
+    <!-- No explicit .axaml files included, so resource configuration is clean -->
   </ItemGroup>
 
   <ItemGroup>

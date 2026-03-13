@@ -1,0 +1,88 @@
+
+[
+// 2000 employees, 2/3 rank 'fo', entry dates between 2007-02-25 and today
+// Example format:
+// {
+//   "id": "10001",
+//   "first_name": "Olivia",
+//   "last_name": "Smith",
+//   "date_of_entry": "2007-02-25",
+//   "rank": "fo"
+// }
+
+// ...
+
+// The following is a sample, the full list will be generated programmatically
+
+  {
+    "id": "10001",
+    "first_name": "Olivia",
+    "last_name": "Smith",
+    "date_of_entry": "2007-02-25",
+    "rank": "fo"
+  },
+  {
+    "id": "10002",
+    "first_name": "Liam",
+    "last_name": "Johnson",
+    "date_of_entry": "2007-03-01",
+    "rank": "fo"
+  },
+  {
+    "id": "10003",
+    "first_name": "Emma",
+    "last_name": "Williams",
+    "date_of_entry": "2007-03-05",
+    "rank": "fo"
+  },
+  {
+    "id": "10004",
+    "first_name": "Noah",
+    "last_name": "Brown",
+    "date_of_entry": "2007-03-09",
+    "rank": "fo"
+  },
+  {
+    "id": "10005",
+    "first_name": "Ava",
+    "last_name": "Jones",
+    "date_of_entry": "2007-03-13",
+    "rank": "fo"
+  },
+  {
+    "id": "10006",
+    "first_name": "Sophia",
+    "last_name": "Garcia",
+    "date_of_entry": "2007-03-17",
+    "rank": "fo"
+  },
+  {
+    "id": "10007",
+    "first_name": "Jackson",
+    "last_name": "Miller",
+    "date_of_entry": "2007-03-21",
+    "rank": "fo"
+  },
+  {
+    "id": "10008",
+    "first_name": "Isabella",
+    "last_name": "Davis",
+    "date_of_entry": "2007-03-25",
+    "rank": "fo"
+  },
+  {
+    "id": "10009",
+    "first_name": "Mason",
+    "last_name": "Martinez",
+    "date_of_entry": "2007-03-29",
+    "rank": "fo"
+  },
+  {
+    "id": "10010",
+    "first_name": "Mia",
+    "last_name": "Hernandez",
+    "date_of_entry": "2007-04-02",
+    "rank": "fo"
+  }
+  // ... 1990 more employees ...
+]

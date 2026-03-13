@@ -8,33 +8,45 @@
         WindowStartupLocation="CenterScreen">
 
   <Border CornerRadius="8" Background="#FFFFFFFF" Padding="20" BorderBrush="#FFE0E0E0" BorderThickness="1" >
-    <Grid>
-      <Grid.RowDefinitions>
-        <RowDefinition Height="*" />
-        <RowDefinition Height="Auto" />
-      </Grid.RowDefinitions>
+    <Canvas>
+      <!-- Version number overlay -->
+      <TextBlock
+        Text="Version 1.0.0"
+        FontSize="20"
+        Foreground="#666666"
+        Canvas.Top="8"
+        Canvas.Right="12"
+        Width="120"
+        HorizontalAlignment="Right"
+        TextAlignment="Right"
+      />
 
-      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-        <!-- Simple vector logo -->
-        <Canvas Width="96" Height="96">
-          <Ellipse Width="96" Height="96" Fill="#3F51B5" />
-          <Path Data="M24,56 C36,36 60,36 72,56 L72,68 C60,88 36,88 24,68 Z" Fill="#FFFFFF" Opacity="0.95"/>
-        </Canvas>
+      <Grid Width="460" Height="320">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-        <TextBlock Text="Holiday Scheduler" FontSize="20" FontWeight="Bold" Foreground="#222222" HorizontalAlignment="Center"/>
-        <TextBlock x:Name="SplashVersionText" Text="Version 1.0.0" FontSize="12" Foreground="#666666" HorizontalAlignment="Center"/>
-        <Border Width="390" Height="86" Background="#F4F7FF" BorderBrush="#D7E0F4" BorderThickness="1" CornerRadius="6" Padding="8">
-          <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <TextBlock x:Name="SplashStatusText"
-                       Text="Starte und prüfe auf Aktualisierungen..."
-                       FontSize="12"
-                       Foreground="#334155"
-                       TextWrapping="Wrap" />
-          </ScrollViewer>
-        </Border>
-      </StackPanel>
+        <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+          <!-- Simple vector logo -->
+          <Canvas Width="96" Height="96">
+            <Ellipse Width="96" Height="96" Fill="#3F51B5" />
+            <Path Data="M24,56 C36,36 60,36 72,56 L72,68 C60,88 36,88 24,68 Z" Fill="#FFFFFF" Opacity="0.95"/>
+          </Canvas>
 
-      <ProgressBar x:Name="SplashProgressBar" Grid.Row="1" IsIndeterminate="False" Minimum="0" Maximum="100" Value="10" Height="6" Margin="0,18,0,0" Foreground="#3F51B5" />
-    </Grid>
+          <TextBlock Text="Holiday Scheduler" FontSize="20" FontWeight="Bold" Foreground="#222222" HorizontalAlignment="Center"/>
+          <TextBlock x:Name="SplashStatusText"
+                     Text="Starte und prüfe auf Aktualisierungen..."
+                     FontSize="14"
+                     Foreground="#334155"
+                     HorizontalAlignment="Center"
+                     Margin="0,16,0,0"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ProgressBar x:Name="SplashProgressBar" Grid.Row="1" IsIndeterminate="False" Minimum="0" Maximum="100" Value="10" Height="6" Margin="0,18,0,0" Foreground="#3F51B5" />
+      </Grid>
+    </Canvas>
   </Border>
 </Window>

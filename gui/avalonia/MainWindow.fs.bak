@@ -1,0 +1,1286 @@
+namespace HolidayScheduler.Gui
+
+open Avalonia.Controls
+open Avalonia.Controls.Primitives
+open Avalonia.Controls.Shapes
+open Avalonia.Input
+open Avalonia.Interactivity
+open Avalonia.Markup.Xaml
+open Avalonia.Media
+open Avalonia.Threading
+open Avalonia.VisualTree
+open System
+open System.Collections.ObjectModel
+open System.Diagnostics
+open System.Globalization
+open System.Net.Http
+open System.IO
+open System.IO.Compression
+open System.Reflection
+open System.Runtime.InteropServices
+open System.Text.Json
+open System.Threading.Tasks
+
+type RosterDayRow() =
+    member val DayLabel = "" with get, set
+    member val Month1Status = "" with get, set
+    member val Month1Translation = "" with get, set
+    member val Month2Status = "" with get, set
+    member val Month2Translation = "" with get, set
+    member val Month3Status = "" with get, set
+    member val Month3Translation = "" with get, set
+    member val Month4Status = "" with get, set
+    member val Month4Translation = "" with get, set
+    member val Month5Status = "" with get, set
+    member val Month5Translation = "" with get, set
+    member val Month6Status = "" with get, set
+    member val Month6Translation = "" with get, set
+    member val Month7Status = "" with get, set
+    member val Month7Translation = "" with get, set
+    member val Month8Status = "" with get, set
+    member val Month8Translation = "" with get, set
+    member val Month9Status = "" with get, set
+    member val Month9Translation = "" with get, set
+    member val Month10Status = "" with get, set
+    member val Month10Translation = "" with get, set
+    member val Month11Status = "" with get, set
+    member val Month11Translation = "" with get, set
+    member val Month12Status = "" with get, set
+    member val Month12Translation = "" with get, set
+
+type YearRosterView() =
+    member val Year = 0 with get, set
+    member val Month1Name = "" with get, set
+    member val Month2Name = "" with get, set
+    member val Month3Name = "" with get, set
+    member val Month4Name = "" with get, set
+    member val Month5Name = "" with get, set
+    member val Month6Name = "" with get, set
+    member val Month7Name = "" with get, set
+    member val Month8Name = "" with get, set
+    member val Month9Name = "" with get, set
+    member val Month10Name = "" with get, set
+    member val Month11Name = "" with get, set
+    member val Month12Name = "" with get, set
+    member val Rows = ResizeArray<RosterDayRow>() with get
+
+type StatusTone =
+    | Positive
+    | Positive
+    | Negative
+
+
+    // All let and do bindings must be at the top
+    let monthName month =
+        CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames.[month - 1]
+
+    let translationForStatus status =
+        match status with
+        | "Vacaciones" -> "Vacaciones: Urlaub"
+        | "Conge" -> "Congé: Urlaub"
+        | "Ferie" -> "Ferie: Urlaub"
+        | "Riposo" -> "Riposo: Ruhetag"
+        let sampleForeignStatus year month day =
+            if day > DateTime.DaysInMonth(year, month) then ""
+            elif day % 17 = 0 then "Vacaciones"
+            elif day % 13 = 0 then "Conge"
+            elif day % 11 = 0 then "Ferie"
+            elif day % 7 = 0 then "Riposo"
+            else ""
+
+        let releasesUrl = "https://github.com/seb-ster/Holiday-scheduler-ai-/releases"
+        let latestReleaseApi = "https://api.github.com/repos/seb-ster/Holiday-scheduler-ai-/releases/latest"
+        let updateTestMode = Environment.GetEnvironmentVariable("HOLIDAY_UPDATE_TEST_MODE")
+        let splash = startupSplash
+        let currentYear = DateTime.Now.Year
+        let years = ObservableCollection<YearRosterView>()
+        let mutable selectedIndex = 2
+        let mutable isSelecting = false
+        let mutable isInitialized = false
+        let mutable yearLabel: TextBlock option = None
+        let mutable updateTestModeBadge: Border option = None
+        let mutable updateTestModeBadgeText: TextBlock option = None
+        let mutable updateTestModeHelpText: TextBlock option = None
+        let mutable yearTabControl: TabControl option = None
+        let mutable yearContent: ContentControl option = None
+        let mutable statusBar: Border option = None
+        let mutable statusMessage: TextBlock option = None
+        let mutable statusCountdown: TextBlock option = None
+        let mutable statusCountdownValue = 2
+        let mutable statusTimer: Avalonia.Threading.DispatcherTimer option = None
+        let mutable statusProgressFill: Rectangle option = None
+        let mutable statusCloseButton: Border option = None
+        let mutable statusCloseLabel: TextBlock option = None
+        let mutable mainMenuOverlay: Border option = None
+        let mutable mainMenuCloseButton: Button option = None
+        let mutable importRosterButton: Button option = None
+        let mutable importRequestsButton: Button option = None
+        let mutable importConstraintsButton: Button option = None
+        let mutable startFreshButton: Button option = None
+        let mutable feedbackButton: Button option = None
+        let mutable mainMenuPanel: Border option = None
+        let mutable isMainMenuAnimating = false
+        | Positive
+        | Negative
+
+    type MainWindow(?startupSplash: SplashWindow) as this =
+        // All let and do bindings must be at the top
+        member val ReleasesUrl = "https://github.com/seb-ster/Holiday-scheduler-ai-/releases" with get, set
+        member val LatestReleaseApi = "https://api.github.com/repos/seb-ster/Holiday-scheduler-ai-/releases/latest" with get, set
+        member val UpdateTestMode = Environment.GetEnvironmentVariable("HOLIDAY_UPDATE_TEST_MODE") with get, set
+        member val Splash = startupSplash with get, set
+        member val CurrentYear = DateTime.Now.Year with get, set
+        member val Years = ObservableCollection<YearRosterView>() with get, set
+        member val SelectedIndex = 2 with get, set
+        member val IsSelecting = false with get, set
+        member val IsInitialized = false with get, set
+        member val YearLabel: TextBlock option = None with get, set
+        member val UpdateTestModeBadge: Border option = None with get, set
+        member val UpdateTestModeBadgeText: TextBlock option = None with get, set
+        member val UpdateTestModeHelpText: TextBlock option = None with get, set
+        member val YearTabControl: TabControl option = None with get, set
+        member val YearContent: ContentControl option = None with get, set
+        member val StatusBar: Border option = None with get, set
+        member val StatusMessage: TextBlock option = None with get, set
+        member val StatusCountdown: TextBlock option = None with get, set
+        member val StatusCountdownValue = 2 with get, set
+        member val StatusTimer: Avalonia.Threading.DispatcherTimer option = None with get, set
+        member val StatusProgressFill: Rectangle option = None with get, set
+        member val StatusCloseButton: Border option = None with get, set
+        member val StatusCloseLabel: TextBlock option = None with get, set
+        member val MainMenuOverlay: Border option = None with get, set
+        member val MainMenuCloseButton: Button option = None with get, set
+        member val ImportRosterButton: Button option = None with get, set
+        member val ImportRequestsButton: Button option = None with get, set
+        member val ImportConstraintsButton: Button option = None with get, set
+        member val StartFreshButton: Button option = None with get, set
+        member val FeedbackButton: Button option = None with get, set
+        member val MainMenuPanel: Border option = None with get, set
+        member val IsMainMenuAnimating = false with get, set
+        member val HasDiscoveredHighlight = false with get, set
+        member val CurrentRosterListBox: ListBox option = None with get, set
+        member val QuitButton: Button option = None with get, set
+        member val DontShowOnStartupCheckBox: CheckBox option = None with get, set
+        member val ShowMainMenuOnStartup = true with get, set
+        member val PostStatus: (string -> StatusTone -> unit) = fun _ _ -> () with get, set
+
+    // Helper functions outside MainWindow
+    let monthName month =
+        CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames.[month - 1]
+
+    let translationForStatus status =
+        match status with
+        | "Vacaciones" -> "Vacaciones: Urlaub"
+        | "Conge" -> "Congé: Urlaub"
+        | "Ferie" -> "Ferie: Urlaub"
+        | "Riposo" -> "Riposo: Ruhetag"
+        | _ -> ""
+
+    let sampleForeignStatus year month day =
+        if day > DateTime.DaysInMonth(year, month) then ""
+        elif day % 17 = 0 then "Vacaciones"
+        elif day % 13 = 0 then "Conge"
+        elif day % 11 = 0 then "Ferie"
+        elif day % 7 = 0 then "Riposo"
+        else ""
+
+        let showWhatsNewSummaryIfFirstStart () =
+            try
+                let appDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "HolidayScheduler")
+                if not (Directory.Exists(appDataDir)) then
+                    Directory.CreateDirectory(appDataDir) |> ignore
+                let markerPath = Path.Combine(appDataDir, "last_seen_version.txt")
+                let currentVersion = Support.currentVersionText ()
+                let lastSeenVersion =
+                    if File.Exists(markerPath) then File.ReadAllText(markerPath).Trim()
+                    else ""
+                if not (String.Equals(lastSeenVersion, currentVersion, StringComparison.Ordinal)) then
+                    let headline =
+                        if String.IsNullOrWhiteSpace(lastSeenVersion) then $"Willkommen in Version {currentVersion}"
+                        else $"Neu in Version {currentVersion}"
+                    let summaryText =
+                        "Was ist neu:\n\n" +
+                        "• Die App startet jetzt zuverlassiger.\n" +
+                        "• Wenn etwas schieflauft, wird automatisch ein Bericht gespeichert.\n" +
+                        "• Hinweise und Meldungen sind jetzt klarer und leichter zu lesen."
+                    let dialog = Window()
+                    dialog.Title <- headline
+                    dialog.Width <- 560.0
+                    dialog.Height <- 280.0
+                    dialog.CanResize <- false
+                    dialog.WindowStartupLocation <- WindowStartupLocation.CenterOwner
+                    dialog.Background <- SolidColorBrush(Color.Parse("#EEF3FB"))
+                    dialog.SystemDecorations <- SystemDecorations.Full
+                    let rootBorder = Border()
+                    rootBorder.Margin <- Avalonia.Thickness(14.0)
+                    rootBorder.Padding <- Avalonia.Thickness(16.0)
+                    rootBorder.Background <- SolidColorBrush(Color.Parse("#F8FAFF"))
+                    rootBorder.BorderBrush <- SolidColorBrush(Color.Parse("#9CB2D8"))
+                    rootBorder.BorderThickness <- Avalonia.Thickness(1.0)
+                    rootBorder.CornerRadius <- Avalonia.CornerRadius(10.0)
+                    let root = StackPanel()
+                    root.Spacing <- 10.0
+                    let titleBlock = TextBlock()
+                    titleBlock.Text <- headline
+                    titleBlock.FontSize <- 18.0
+                    titleBlock.FontWeight <- FontWeight.SemiBold
+                    titleBlock.Foreground <- SolidColorBrush(Color.Parse("#142746"))
+                    let message = TextBlock()
+                    message.Text <- summaryText
+                    message.TextWrapping <- TextWrapping.Wrap
+                    dialog.Content <- rootBorder
+                    rootBorder.Child <- root
+                    root.Children.Add(titleBlock)
+                    root.Children.Add(message)
+                    dialog.ShowDialog(this) |> ignore
+                File.WriteAllText(markerPath, currentVersion)
+            with _ -> ()
+        // ...existing code...
+        ()
+            row.Month5Translation <- translationForStatus row.Month5Status
+            row.Month6Status <- sampleForeignStatus year 6 day
+            row.Month6Translation <- translationForStatus row.Month6Status
+            row.Month7Status <- sampleForeignStatus year 7 day
+            row.Month7Translation <- translationForStatus row.Month7Status
+            row.Month8Status <- sampleForeignStatus year 8 day
+            row.Month8Translation <- translationForStatus row.Month8Status
+            row.Month9Status <- sampleForeignStatus year 9 day
+            row.Month9Translation <- translationForStatus row.Month9Status
+            row.Month10Status <- sampleForeignStatus year 10 day
+            row.Month10Translation <- translationForStatus row.Month10Status
+            row.Month11Status <- sampleForeignStatus year 11 day
+            row.Month11Translation <- translationForStatus row.Month11Status
+            row.Month12Status <- sampleForeignStatus year 12 day
+            row.Month12Translation <- translationForStatus row.Month12Status
+            view.Rows.Add(row)
+        ()
+
+    do
+        AvaloniaXamlLoader.Load(this)
+        yearLabel <- Some(this.FindControl<TextBlock>("YearLabel"))
+        updateTestModeBadge <- Some(this.FindControl<Border>("UpdateTestModeBadge"))
+        updateTestModeBadgeText <- Some(this.FindControl<TextBlock>("UpdateTestModeBadgeText"))
+        updateTestModeHelpText <- Some(this.FindControl<TextBlock>("UpdateTestModeHelpText"))
+        yearTabControl <- Some(this.FindControl<TabControl>("YearTabControl"))
+        yearContent <- Some(this.FindControl<ContentControl>("YearContent"))
+        statusBar <- Some(this.FindControl<Border>("StatusBar"))
+        statusMessage <- Some(this.FindControl<TextBlock>("StatusMessage"))
+        statusCountdown <- Some(this.FindControl<TextBlock>("StatusCountdown"))
+        statusProgressFill <- Some(this.FindControl<Rectangle>("StatusProgressFill"))
+        statusCloseButton <- Some(this.FindControl<Border>("StatusCloseButton"))
+        statusCloseLabel <- Some(this.FindControl<TextBlock>("StatusCloseLabel"))
+        mainMenuOverlay <- Some(this.FindControl<Border>("MainMenuOverlay"))
+        mainMenuCloseButton <- Some(this.FindControl<Button>("MainMenuCloseButton"))
+        importRosterButton <- Some(this.FindControl<Button>("ImportRosterButton"))
+        importRequestsButton <- Some(this.FindControl<Button>("ImportRequestsButton"))
+        importConstraintsButton <- Some(this.FindControl<Button>("ImportConstraintsButton"))
+        startFreshButton <- Some(this.FindControl<Button>("StartFreshButton"))
+        feedbackButton <- Some(this.FindControl<Button>("FeedbackButton"))
+        quitButton <- Some(this.FindControl<Button>("QuitButton"))
+        mainMenuPanel <- Some(this.FindControl<Border>("MainMenuPanel"))
+        dontShowOnStartupCheckBox <- Some(this.FindControl<CheckBox>("DontShowOnStartupCheckBox"))
+
+    do
+        let mode =
+            if String.IsNullOrWhiteSpace(updateTestMode) then ""
+            else updateTestMode.Trim().ToLowerInvariant()
+
+        let shouldShow = mode = "available" || mode = "latest" || mode = "offline"
+
+        match updateTestModeBadge with
+            | Some badge -> badge.IsVisible <- shouldShow
+            | None -> ()
+
+        match updateTestModeHelpText with
+            | Some help -> help.IsVisible <- shouldShow
+            | None -> ()
+
+        if shouldShow then
+            match updateTestModeBadgeText with
+                | Some label -> label.Text <- $"AKTUALISIERUNG TESTMODUS: {mode.ToUpperInvariant()}"
+                | None -> ()
+
+            match updateTestModeHelpText with
+                | Some help ->
+                    help.Text <- $"Testmodus ({mode}) ist nur zum Ausprobieren vom Update-Ablauf. Im Normalmodus prüft die App echte Updates und lädt nur herunter, wenn wirklich eine neue Version verfügbar ist."
+                | None -> ()
+
+    let showMainMenu () =
+        if not isMainMenuAnimating then
+            isMainMenuAnimating <- true
+            match mainMenuOverlay, mainMenuPanel with
+            | Some overlay, Some panel ->
+                overlay.IsVisible <- true
+                panel.Opacity <- 0.0
+                let transform = TranslateTransform(0.0, 18.0)
+                panel.RenderTransform <- transform
+
+                let steps = 12
+                let mutable step = 0
+                let timer = DispatcherTimer()
+                timer.Interval <- TimeSpan.FromMilliseconds(16.0)
+                timer.Tick.Add(fun _ ->
+                    step <- step + 1
+                    let p = min 1.0 (float step / float steps)
+                    let eased = 1.0 - Math.Pow(1.0 - p, 3.0)
+                    panel.Opacity <- eased
+                    transform.Y <- 18.0 * (1.0 - eased)
+
+                    if step >= steps then
+                        panel.Opacity <- 1.0
+                        transform.Y <- 0.0
+                        isMainMenuAnimating <- false
+                        timer.Stop())
+                timer.Start()
+            | Some overlay, None ->
+                overlay.IsVisible <- true
+                isMainMenuAnimating <- false
+            | _ ->
+                isMainMenuAnimating <- false
+        ()
+
+    let hideMainMenu () =
+        match mainMenuOverlay with
+        | Some overlay -> overlay.IsVisible <- false
+        | None -> ()
+        ()
+
+    let normalizeVersion (raw: string) =
+        raw.Trim().TrimStart('v', 'V').Split('-')[0]
+
+    let tryGetStringProperty (name: string) (node: JsonElement) =
+        let mutable value = Unchecked.defaultof<JsonElement>
+
+        if node.TryGetProperty(name, &value) && value.ValueKind = JsonValueKind.String then
+            let content = value.GetString()
+            if String.IsNullOrWhiteSpace(content) then None else Some content
+        else
+            None
+
+    let tryParseVersion (raw: string) =
+        match Version.TryParse(normalizeVersion raw) with
+        | true, parsed -> Some parsed
+        | _ -> None
+
+    let currentVersionText () =
+        let version =
+            match Assembly.GetEntryAssembly() with
+            | null -> Version(1, 0, 0)
+            | asm ->
+                match asm.GetName().Version with
+                | null -> Version(1, 0, 0)
+                | v -> v
+
+        $"{version.Major}.{version.Minor}.{version.Build}"
+
+    let trySelectDownloadAsset (root: JsonElement) =
+        let mutable assets = Unchecked.defaultof<JsonElement>
+
+        if root.TryGetProperty("assets", &assets) && assets.ValueKind = JsonValueKind.Array then
+            let candidates =
+                assets.EnumerateArray()
+                |> Seq.choose (fun asset ->
+                    match tryGetStringProperty "name" asset, tryGetStringProperty "browser_download_url" asset with
+                    | Some name, Some url -> Some (name, url)
+                    | _ -> None)
+                |> Seq.toList
+
+            // Prioritize: .dmg > macOS .zip > other .zip > any macOS asset > first asset
+            let dmg =
+                candidates
+                |> List.tryFind (fun (name, _) ->
+                    (name.Contains("macos", StringComparison.OrdinalIgnoreCase)
+                     || name.Contains("osx", StringComparison.OrdinalIgnoreCase))
+                    && name.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase))
+
+            let macosZip =
+                candidates
+                |> List.tryFind (fun (name, _) ->
+                    (name.Contains("macos", StringComparison.OrdinalIgnoreCase)
+                     || name.Contains("osx", StringComparison.OrdinalIgnoreCase)
+                     || name.Contains("arm64", StringComparison.OrdinalIgnoreCase))
+                    && name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+
+            let zip =
+                candidates
+                |> List.tryFind (fun (name, _) -> name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+
+            let macosAsset =
+                candidates
+                |> List.tryFind (fun (name, _) ->
+                    name.Contains("macos", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("osx", StringComparison.OrdinalIgnoreCase))
+
+            match dmg, macosZip, zip, macosAsset with
+            | Some asset, _, _, _ -> Some asset
+            | None, Some asset, _, _ -> Some asset
+            | None, None, Some asset, _ -> Some asset
+            | None, None, None, Some asset -> Some asset
+            | _ -> candidates |> List.tryHead
+        else
+            None
+
+    let revealDownloadedFile (path: string) =
+        try
+            if RuntimeInformation.IsOSPlatform(OSPlatform.OSX) then
+                let psi = ProcessStartInfo("open")
+                psi.ArgumentList.Add("-R")
+                psi.ArgumentList.Add(path)
+                psi.UseShellExecute <- false
+                Process.Start(psi) |> ignore
+            elif RuntimeInformation.IsOSPlatform(OSPlatform.Windows) then
+                let psi = ProcessStartInfo("explorer.exe")
+                psi.ArgumentList.Add("/select,")
+                psi.ArgumentList.Add(path)
+                psi.UseShellExecute <- false
+                Process.Start(psi) |> ignore
+            else
+                let folder = Path.GetDirectoryName(path)
+                if not (String.IsNullOrWhiteSpace(folder)) then
+                    let psi = ProcessStartInfo("xdg-open")
+                    psi.ArgumentList.Add(folder)
+                    psi.UseShellExecute <- false
+                    Process.Start(psi) |> ignore
+        with _ ->
+            ()
+
+    let extractAppFromZip (zipPath: string) =
+        try
+            use archive = ZipFile.OpenRead(zipPath)
+            // Look for .app bundle in the zip
+            let appEntry =
+                archive.Entries
+                |> Seq.tryFind (fun e ->
+                    e.FullName.Contains(".app/", StringComparison.OrdinalIgnoreCase)
+                    && e.FullName.EndsWith("MacOS/Holiday Scheduler Demonstrator", StringComparison.OrdinalIgnoreCase))
+
+            match appEntry with
+            | Some entry ->
+                // Extract to Applications folder
+                let appDir = Path.Combine("/Applications", "Holiday Scheduler Demonstrator.app")
+                let targetPath = Path.Combine(appDir, "Contents", "MacOS", "Holiday Scheduler Demonstrator")
+                
+                // Create directory structure if needed
+                Directory.CreateDirectory(Path.GetDirectoryName(targetPath)) |> ignore
+                
+                // Extract all files from .app bundle
+                archive.Entries
+                |> Seq.filter (fun e ->
+                    e.FullName.Contains(".app/", StringComparison.OrdinalIgnoreCase)
+                    && not (String.IsNullOrWhiteSpace(e.Name)))
+                |> Seq.iter (fun e ->
+                    let relativePath =
+                        if e.FullName.Contains(".app/Contents/") then
+                            let idx = e.FullName.IndexOf(".app/Contents/")
+                            if idx >= 0 then
+                                e.FullName.Substring(idx + 5) // Skip ".app/"
+                            else
+                                e.FullName
+                        else
+                            e.FullName
+                    
+                    let targetFile = Path.Combine(appDir, relativePath)
+                    let targetDir = Path.GetDirectoryName(targetFile)
+                    Directory.CreateDirectory(targetDir) |> ignore
+                    
+                    if not (String.IsNullOrWhiteSpace(e.Name)) then
+                        do
+                            use src = e.Open()
+                            use dst = File.Create(targetFile)
+                            src.CopyTo(dst))
+                
+                // Make executable
+                if RuntimeInformation.IsOSPlatform(OSPlatform.OSX) then
+                    let psi = ProcessStartInfo("chmod")
+                    psi.ArgumentList.Add("+x")
+                    psi.ArgumentList.Add(targetPath)
+                    psi.UseShellExecute <- false
+                    Process.Start(psi) |> ignore
+                
+                Some appDir
+            | None -> None
+        with _ -> None
+
+    let downloadLatestAsset (latestTag: string) (assetName: string) (assetUrl: string) (splash: SplashWindow option) =
+        Task.Run(fun () ->
+            task {
+                try
+                    let downloadDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")
+                    Directory.CreateDirectory(downloadDir) |> ignore
+
+                    let fallbackName = $"holiday-scheduler-demonstrator-{normalizeVersion latestTag}.zip"
+                    let fileName = if String.IsNullOrWhiteSpace(assetName) then fallbackName else assetName
+                    let targetPath = Path.Combine(downloadDir, fileName)
+
+                    use client = new HttpClient()
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("HolidaySchedulerDemonstrator/1.0")
+
+                    Dispatcher.UIThread.Post(fun () ->
+                        match splash with
+                        | Some s -> s.SetStatus("Lade Update herunter...")
+                        | None -> postStatus "Downloading update..." Neutral)
+
+                    use! response = client.GetAsync(assetUrl)
+                    response.EnsureSuccessStatusCode()
+
+                    use! input = response.Content.ReadAsStreamAsync()
+                    use output = File.Create(targetPath)
+                    do! input.CopyToAsync(output)
+
+                    Dispatcher.UIThread.Post(fun () ->
+                        match splash with
+                        | Some s -> s.SetStatus("Extrahiere Update...")
+                        | None -> postStatus "Extracting update..." Neutral)
+
+                    // If it's a zip, extract it
+                    let finalPath =
+                        if fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) then
+                            match extractAppFromZip targetPath with
+                            | Some appPath -> appPath
+                            | None -> targetPath
+                        else
+                            targetPath
+
+                    Dispatcher.UIThread.Post(fun () ->
+                        match splash with
+                        | Some s -> s.Close()
+                        | None -> ()
+                        postStatus $"Update fertig: {Path.GetFileName(finalPath)}" Positive
+                        revealDownloadedFile finalPath)
+                with ex ->
+                    Dispatcher.UIThread.Post(fun () ->
+                        match splash with
+                        | Some s -> s.Close()
+                        | None -> ()
+                        postStatus $"Update verfügbar. Manuell herunterladen: {releasesUrl}" Negative
+                        Support.saveCrashReport ex |> ignore)
+            }
+            :> Task)
+        |> ignore
+
+    let showDownloadLocation latestTag =
+        let msg =
+            $"Update available ({currentVersionText()} -> {latestTag}). Download: {releasesUrl}"
+
+        postStatus msg Neutral
+        this.Clipboard.SetTextAsync(releasesUrl) |> ignore
+
+    let checkForUpdates autoDownload (splash: SplashWindow option) =
+        Task.Run(fun () ->
+            task {
+                try
+                    Dispatcher.UIThread.Post(fun () ->
+                        match splash with
+                        | Some s -> s.SetStatus("Prüfe neueste Version über GitHub Releases...")
+                        | None -> ())
+
+                    let mode =
+                        if String.IsNullOrWhiteSpace(updateTestMode) then ""
+                        else updateTestMode.Trim().ToLowerInvariant()
+
+                    if mode = "offline" then
+                        if not autoDownload then
+                            Dispatcher.UIThread.Post(fun () -> postStatus "[TEST] Could not check updates right now" Negative)
+                    elif mode = "latest" then
+                        Dispatcher.UIThread.Post(fun () ->
+                            match splash with
+                            | Some s -> s.SetStatus("[TEST] Bereits auf der neuesten Version.")
+                            | None -> ())
+                        if not autoDownload then
+                            Dispatcher.UIThread.Post(fun () -> postStatus "[TEST] You are on the latest version" Positive)
+                    elif mode = "available" then
+                        let fakeTag = "v9.9.9"
+                        if autoDownload then
+                            let fakeName = "holiday-scheduler-demonstrator-test-update.zip"
+                            let fakeUrl = "https://github.com/seb-ster/Holiday-scheduler-ai-/releases/latest"
+                            Dispatcher.UIThread.Post(fun () ->
+                                match splash with
+                                | Some s -> s.SetStatus("[TEST] Update gefunden. Wird heruntergeladen...")
+                                | None -> postStatus "[TEST] Update found. Downloading..." Neutral)
+                            downloadLatestAsset fakeTag fakeName fakeUrl splash
+                        else
+                            Dispatcher.UIThread.Post(fun () -> showDownloadLocation fakeTag)
+                    else
+                        Dispatcher.UIThread.Post(fun () ->
+                            match splash with
+                            | Some s -> s.SetStatus("Verbinde zu GitHub API...")
+                            | None -> ())
+
+                        use client = new HttpClient()
+                        client.DefaultRequestHeaders.UserAgent.ParseAdd("HolidaySchedulerDemonstrator/1.0")
+
+                        Dispatcher.UIThread.Post(fun () ->
+                            match splash with
+                            | Some s -> s.SetStatus("Lade Release-Informationen...")
+                            | None -> ())
+
+                        let! payload = client.GetStringAsync(latestReleaseApi)
+                        use doc = JsonDocument.Parse(payload)
+
+                        let latestTag = doc.RootElement.GetProperty("tag_name").GetString()
+
+                        if String.IsNullOrWhiteSpace(latestTag) then
+                            ()
+                        else
+                            let latestVersion = tryParseVersion latestTag
+                            let currentVersion = tryParseVersion (currentVersionText())
+
+                            match currentVersion, latestVersion with
+                            | Some current, Some latest when latest > current ->
+                                Dispatcher.UIThread.Post(fun () ->
+                                    match splash with
+                                    | Some s -> s.SetStatus($"Neue Version gefunden: {latestTag}")
+                                    | None -> ())
+                                if autoDownload then
+                                    match trySelectDownloadAsset doc.RootElement with
+                                    | Some (assetName, assetUrl) ->
+                                        Dispatcher.UIThread.Post(fun () ->
+                                            match splash with
+                                            | Some s -> s.SetStatus("Update gefunden. Wird heruntergeladen...")
+                                            | None -> postStatus "Update found. Downloading..." Neutral)
+                                        downloadLatestAsset latestTag assetName assetUrl splash
+                                    | None ->
+                                        Dispatcher.UIThread.Post(fun () ->
+                                            match splash with
+                                            | Some s -> s.Close()
+                                            | None -> ()
+                                            showDownloadLocation latestTag)
+                                else
+                                    Dispatcher.UIThread.Post(fun () -> showDownloadLocation latestTag)
+                            | _ ->
+                                Dispatcher.UIThread.Post(fun () ->
+                                    match splash with
+                                    | Some s ->
+                                        s.SetStatus("Keine neuere Version gefunden.")
+                                        s.Close()
+                                    | None -> ()
+                                    if not autoDownload then
+                                        postStatus "Sie haben die neueste Version" Positive)
+                with ex ->
+                    Dispatcher.UIThread.Post(fun () ->
+                        match splash with
+                        | Some s ->
+                            s.SetStatus("Update-Prüfung fehlgeschlagen.")
+                            s.Close()
+                        | None -> ()
+                        if not autoDownload then
+                            postStatus "Update-Prüfung jetzt nicht möglich" Negative
+                        Support.saveCrashReport ex |> ignore)
+            }
+            :> Task)
+        |> ignore
+
+    let configureNativeMainMenu () =
+        let root = NativeMenu()
+        
+        // Main Menu item
+        let menuRoot = NativeMenuItem("Main Menu")
+        let menuSubmenu = NativeMenu()
+        let openItem = NativeMenuItem("Open Main Menu")
+        openItem.Gesture <- KeyGesture.Parse("Meta+M")
+        openItem.Click.Add(fun _ -> showMainMenu())
+        menuSubmenu.Add(openItem)
+        menuRoot.Menu <- menuSubmenu
+        root.Add(menuRoot)
+        
+        // Import Menu item with submenu
+        let importMenuRoot = NativeMenuItem("Import")
+        let importSubmenu = NativeMenu()
+        
+        let importRosterItem = NativeMenuItem("Import Roster...")
+        importRosterItem.Click.Add(fun _ ->
+            match importRosterButton with
+            | Some btn -> btn.RaiseEvent(RoutedEventArgs(Button.ClickEvent))
+            | None -> ())
+        importSubmenu.Add(importRosterItem)
+        
+        let importRequestsItem = NativeMenuItem("Import Requests...")
+        importRequestsItem.Click.Add(fun _ ->
+            match importRequestsButton with
+            | Some btn -> btn.RaiseEvent(RoutedEventArgs(Button.ClickEvent))
+            | None -> ())
+        importSubmenu.Add(importRequestsItem)
+        
+        let importConstraintsItem = NativeMenuItem("Import Constraints...")
+        importConstraintsItem.Click.Add(fun _ ->
+            match importConstraintsButton with
+            | Some btn -> btn.RaiseEvent(RoutedEventArgs(Button.ClickEvent))
+            | None -> ())
+        importSubmenu.Add(importConstraintsItem)
+        
+        importMenuRoot.Menu <- importSubmenu
+        root.Add(importMenuRoot)
+
+        let updatesRoot = NativeMenuItem("Updates")
+        let updatesSubmenu = NativeMenu()
+
+        let checkUpdatesItem = NativeMenuItem("Check for Updates")
+        checkUpdatesItem.Click.Add(fun _ -> checkForUpdates false None)
+        updatesSubmenu.Add(checkUpdatesItem)
+
+        let downloadUpdateItem = NativeMenuItem("Download Latest Update")
+        downloadUpdateItem.Click.Add(fun _ -> checkForUpdates true None)
+        updatesSubmenu.Add(downloadUpdateItem)
+
+        let releasesItem = NativeMenuItem("Show Download Location")
+        releasesItem.Click.Add(fun _ ->
+            postStatus $"Download location: {releasesUrl}" Neutral
+            this.Clipboard.SetTextAsync(releasesUrl) |> ignore)
+        updatesSubmenu.Add(releasesItem)
+
+        updatesRoot.Menu <- updatesSubmenu
+        root.Add(updatesRoot)
+        
+        NativeMenu.SetMenu(this, root)
+
+    // TabItems are now managed by TabControl; no manual references needed
+
+    let updateYearLabel selectedYear =
+        match yearLabel with
+        | Some label -> label.Text <- $"Roster year {selectedYear}"
+        | None -> ()
+
+    let setStatusTone tone =
+        let backgroundHex, foregroundHex, borderHex, progressHex =
+            match tone with
+            | Positive -> "#CFEBD8", "#165522", "#7FBE90", "#9FDAB0"
+            | Negative -> "#FFD6D6", "#8A1B1B", "#EB9A9A", "#F3B0B0"
+            | Neutral -> "#FFEEC0", "#7F5600", "#E9CB74", "#9D6A00"
+
+        match statusBar with
+        | Some bar -> 
+            bar.Background <- SolidColorBrush(Color.Parse(backgroundHex))
+            bar.BorderBrush <- SolidColorBrush(Color.Parse(borderHex))
+        | None -> ()
+
+        let foregroundBrush = SolidColorBrush(Color.Parse(foregroundHex))
+
+        match statusMessage with
+        | Some msg -> msg.Foreground <- foregroundBrush
+        | None -> ()
+
+        match statusCountdown with
+        | Some countdown -> countdown.Foreground <- foregroundBrush
+        | None -> ()
+
+        match statusCloseButton with
+        | Some btn ->
+            btn.BorderBrush <- SolidColorBrush(Color.Parse(backgroundHex))
+            btn.Background <- SolidColorBrush(Color.Parse(backgroundHex))
+        | None -> ()
+
+        match statusCloseLabel with
+        | Some label -> label.Foreground <- foregroundBrush
+        | None -> ()
+
+        match statusProgressFill with
+        | Some fill -> fill.Fill <- SolidColorBrush(Color.Parse(progressHex))
+        | None -> ()
+
+    let selectYear index animate =
+        if not isSelecting then
+            isSelecting <- true
+
+            try
+                let previousIndex = selectedIndex
+                selectedIndex <- index
+                match yearTabControl with
+                | Some tabControl -> tabControl.SelectedIndex <- index
+                | None -> ()
+
+                match yearContent with
+                | Some content ->
+                    content.Content <- years[index]
+
+                    if animate then
+                        let direction = if index >= previousIndex then 1.0 else -1.0
+                        let width = if content.Bounds.Width > 0.0 then content.Bounds.Width else 1000.0
+                        let startX = (max 260.0 (width * 0.55)) * direction
+                        let transform = TranslateTransform(startX, 0.0)
+                        content.RenderTransform <- transform
+                        content.Opacity <- 0.62
+
+                        let steps = 13
+                        let mutable currentStep = 0
+                        let slideTimer = DispatcherTimer()
+                        slideTimer.Interval <- TimeSpan.FromMilliseconds(16.0)
+                        slideTimer.Tick.Add(fun _ ->
+                            currentStep <- currentStep + 1
+                            let p = min 1.0 (float currentStep / float steps)
+                            let eased = 1.0 - Math.Pow(1.0 - p, 3.0)
+                            transform.X <- startX * (1.0 - eased)
+                            content.Opacity <- 0.62 + (0.38 * eased)
+
+                            if currentStep >= steps then
+                                transform.X <- 0.0
+                                content.Opacity <- 1.0
+                                slideTimer.Stop())
+                        slideTimer.Start()
+                    else
+                        content.RenderTransform <- TranslateTransform(0.0, 0.0)
+                        content.Opacity <- 1.0
+                | None -> ()
+
+                updateYearLabel years[index].Year
+            finally
+                isSelecting <- false
+
+    let updateActiveMonthHighlight monthIndex =
+        let classNames =
+            [|
+                "monthCol1Active"; "monthCol2Active"; "monthCol3Active"; "monthCol4Active";
+                "monthCol5Active"; "monthCol6Active"; "monthCol7Active"; "monthCol8Active";
+                "monthCol9Active"; "monthCol10Active"; "monthCol11Active"; "monthCol12Active"
+            |]
+
+        match currentRosterListBox with
+        | Some lb ->
+            for cls in classNames do
+                lb.Classes.Remove(cls) |> ignore
+
+            if monthIndex >= 1 && monthIndex <= 12 then
+                lb.Classes.Add(classNames[monthIndex - 1])
+        | None -> ()
+
+    let hideStatus () =
+        match statusTimer with
+        | Some timer ->
+            timer.Stop()
+        | None -> ()
+
+        statusTimer <- None
+
+        match statusBar with
+        | Some bar -> bar.IsVisible <- false
+        | None -> ()
+
+    let showStatus message tone =
+        setStatusTone tone
+
+        match statusMessage with
+        | Some msg -> msg.Text <- message
+        | None -> ()
+
+        statusCountdownValue <- 2
+
+        match statusCountdown with
+        | Some countdown -> countdown.Text <- statusCountdownValue.ToString()
+        | None -> ()
+
+        // Reset progress fill to 0 width
+        match statusProgressFill with
+        | Some fill -> fill.Width <- 0.0
+        | None -> ()
+
+        match statusBar with
+        | Some bar -> bar.IsVisible <- true
+        | None -> ()
+
+        // Stop existing timer if any
+        match statusTimer with
+        | Some timer -> timer.Stop()
+        | None -> ()
+
+        // Create new countdown timer with smooth progress updates
+        let totalDuration = match tone with Neutral -> 3.0 | _ -> 2.0
+        let updateInterval = 0.05 // 50ms for smooth animation
+        let totalSteps = int (totalDuration / updateInterval)
+        let mutable currentStep = 0
+        let buttonWidth = 82.0 // matches XAML Width
+
+        let timer = Avalonia.Threading.DispatcherTimer()
+        timer.Interval <- TimeSpan.FromSeconds(updateInterval)
+        timer.Tick.Add(fun _ ->
+            currentStep <- currentStep + 1
+            let progress = float currentStep / float totalSteps
+            
+            // Update progress fill width
+            match statusProgressFill with
+            | Some fill -> fill.Width <- buttonWidth * progress
+            | None -> ()
+            
+            // Update countdown display every second
+            let secondsRemaining = int (totalDuration * (1.0 - progress))
+            if secondsRemaining <> statusCountdownValue then
+                statusCountdownValue <- secondsRemaining
+                match statusCountdown with
+                | Some countdown -> countdown.Text <- statusCountdownValue.ToString()
+                | None -> ()
+            
+            if currentStep >= totalSteps then
+                hideStatus())
+
+        statusTimer <- Some timer
+        timer.Start()
+
+    do
+        postStatus <- showStatus
+
+    let buildYearTabs () =
+        years.Clear()
+
+        for year in (currentYear - 2) .. (currentYear + 2) do
+            let view = YearRosterView()
+            view.Year <- year
+            fillMonths view
+            fillRows view year
+            years.Add(view)
+
+    do
+        buildYearTabs ()
+
+        // RosterListBox is created inside a ContentTemplate; locate it after layout pass.
+        let attachRosterSelectionHandler () =
+            Dispatcher.UIThread.Post((fun () ->
+                let descendants =
+                    match yearContent with
+                    | Some content -> content.GetVisualDescendants()
+                    | None -> this.GetVisualDescendants()
+
+                let listBoxCandidate =
+                    descendants
+                    |> Seq.tryPick (fun visual ->
+                        match visual with
+                        | :? ListBox as lb -> Some lb
+                        | _ -> None)
+
+                match listBoxCandidate, currentRosterListBox with
+                | Some lb, Some current when Object.ReferenceEquals(lb, current) -> ()
+                | Some lb, _ ->
+                    currentRosterListBox <- Some lb
+                    updateActiveMonthHighlight DateTime.Today.Month
+                    lb.SelectionChanged.Add(fun _ ->
+                        match lb.SelectedItem with
+                        | :? RosterDayRow as row ->
+                            if not hasDiscoveredHighlight then
+                                hasDiscoveredHighlight <- true
+                                showStatus "Success: highlight discovered" Positive
+                            else
+                                showStatus $"Day {row.DayLabel} selected" Positive
+                        | _ ->
+                            showStatus "No day selected" Negative)
+                | None, _ -> ()), DispatcherPriority.Background)
+
+        // TabItems are now managed by TabControl; set headers if needed
+
+        match yearTabControl with
+        | Some tabControl ->
+            tabControl.SelectionChanged.Add(fun _ ->
+                if isInitialized && not isSelecting then
+                    let index = tabControl.SelectedIndex
+                    if index >= 0 && index < years.Count && index <> selectedIndex then
+                        selectYear index true
+                        attachRosterSelectionHandler ()
+            )
+        | None -> ()
+
+        selectYear selectedIndex false
+        isInitialized <- true
+        configureNativeMainMenu ()
+        checkForUpdates true splash
+
+        // Show empty roster popup if roster is empty
+        let emptyRosterPopup = this.FindControl<Border>("EmptyRosterPopup")
+        let importRosterPopupButton = this.FindControl<Button>("ImportRosterPopupButton")
+        let isRosterEmpty =
+            years |> Seq.forall (fun y -> y.Rows.Count = 0)
+        if not (isNull emptyRosterPopup) then
+            emptyRosterPopup.IsVisible <- isRosterEmpty
+        if not (isNull importRosterPopupButton) then
+            importRosterPopupButton.Click.Add(fun _ ->
+                let openDialog = OpenFileDialog()
+                openDialog.Title <- "Import Roster File"
+                openDialog.AllowMultiple <- false
+                openDialog.Filters.Add(FileDialogFilter(Name = "Roster Files", Extensions = new System.Collections.Generic.List<string>([| "json"; "csv" |])))
+                let task: System.Threading.Tasks.Task<string[]> = openDialog.ShowAsync(this)
+                task.ContinueWith(fun (t: System.Threading.Tasks.Task<string[]>) ->
+                    let files: string[] = t.Result
+                    if files <> null && files.Length > 0 then
+                        emptyRosterPopup.IsVisible <- false
+                        showStatus (sprintf "Imported roster: %s" files.[0]) Positive
+                ) |> ignore)
+        
+        // Load preference for "Don't show on startup"
+        let prefFile = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData), "HolidayScheduler", "prefs.txt")
+        if System.IO.File.Exists(prefFile) then
+            let content = System.IO.File.ReadAllText(prefFile).Trim()
+            let isDontShow = (content = "1")
+            showMainMenuOnStartup <- not isDontShow
+            match dontShowOnStartupCheckBox with
+            | Some checkbox -> checkbox.IsChecked <- System.Nullable(isDontShow)
+            | None -> ()
+        else
+            showMainMenuOnStartup <- true
+        
+        // Show menu only if preference allows it
+        if showMainMenuOnStartup then
+            showMainMenu ()
+
+        // Wire up status bar close button
+        let closeButton = this.FindControl<Border>("StatusCloseButton")
+        if not (isNull closeButton) then
+            closeButton.PointerPressed.Add(fun _ -> hideStatus())
+
+        // Today quick navigation
+        let todayButton = this.FindControl<Button>("TodayButton")
+        if not (isNull todayButton) then
+            todayButton.Click.Add(fun _ ->
+                let today = DateTime.Today
+                let todayIndex = years |> Seq.tryFindIndex (fun y -> y.Year = today.Year)
+                match todayIndex with
+                | Some index ->
+                    selectYear index true
+                    attachRosterSelectionHandler ()
+                    Dispatcher.UIThread.Post((fun () ->
+                        updateActiveMonthHighlight today.Month
+                        match currentRosterListBox with
+                        | Some lb when today.Day - 1 < lb.ItemCount && today.Day - 1 >= 0 ->
+                            lb.SelectedIndex <- today.Day - 1
+                            lb.ScrollIntoView(lb.SelectedItem)
+                            let todayText = today.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)
+                            showStatus $"Today: {todayText}" Neutral
+                        | _ -> showStatus "Today row unavailable" Negative), DispatcherPriority.Background)
+                | None -> showStatus "Today year not in tabs" Negative)
+
+        // Manual status test controls
+        let positiveButton = this.FindControl<Button>("StatusPositiveButton")
+        if not (isNull positiveButton) then
+            positiveButton.Click.Add(fun _ -> showStatus "Manual positive status" Positive)
+
+        let negativeButton = this.FindControl<Button>("StatusNegativeButton")
+        if not (isNull negativeButton) then
+            negativeButton.Click.Add(fun _ -> showStatus "Manual negative status" Negative)
+
+        let neutralButton = this.FindControl<Button>("StatusNeutralButton")
+        if not (isNull neutralButton) then
+            neutralButton.Click.Add(fun _ -> showStatus "Manual neutral status" Neutral)
+
+
+        match importRosterButton with
+        | Some btn ->
+            btn.Click.Add(fun _ ->
+                let openDialog = OpenFileDialog()
+                openDialog.Title <- "Import Roster File"
+                openDialog.AllowMultiple <- false
+                openDialog.Filters.Add(FileDialogFilter(Name = "Roster Files", Extensions = new System.Collections.Generic.List<string>([| "json"; "csv" |])))
+                let task: System.Threading.Tasks.Task<string[]> = openDialog.ShowAsync(this)
+                task.ContinueWith(fun (t: System.Threading.Tasks.Task<string[]>) ->
+                    let files: string[] = t.Result
+                    if files <> null && files.Length > 0 then
+                        try
+                            let json = File.ReadAllText(files.[0])
+                            let roster = JsonSerializer.Deserialize<YearRosterView[]>(json)
+                            years.Clear()
+                            for y in roster do years.Add(y)
+                            showStatus (sprintf "Imported roster: %s" files.[0]) Positive
+                        with ex ->
+                            showStatus (sprintf "Failed to import roster: %s" ex.Message) Negative
+                        hideMainMenu ()) |> ignore)
+        | None -> ()
+
+        match importRequestsButton with
+        | Some btn ->
+            btn.Click.Add(fun _ ->
+                let openDialog = OpenFileDialog()
+                openDialog.Title <- "Import Requests File"
+                openDialog.AllowMultiple <- false
+                openDialog.Filters.Add(FileDialogFilter(Name = "Requests Files", Extensions = new System.Collections.Generic.List<string>([| "json"; "csv" |])))
+                let task: System.Threading.Tasks.Task<string[]> = openDialog.ShowAsync(this)
+                task.ContinueWith(fun (t: System.Threading.Tasks.Task<string[]>) ->
+                    let files: string[] = t.Result
+                    if files <> null && files.Length > 0 then
+                        try
+                            let json = File.ReadAllText(files.[0])
+                            // Parse requests and update internal state as needed
+                            showStatus (sprintf "Imported requests: %s" files.[0]) Positive
+                        with ex ->
+                            showStatus (sprintf "Failed to import requests: %s" ex.Message) Negative
+                        hideMainMenu ()) |> ignore)
+        | None -> ()
+
+        match importConstraintsButton with
+        | Some btn ->
+            btn.Click.Add(fun _ ->
+                let openDialog = OpenFileDialog()
+                openDialog.Title <- "Import Constraints File"
+                openDialog.AllowMultiple <- false
+                openDialog.Filters.Add(FileDialogFilter(Name = "Constraints Files", Extensions = new System.Collections.Generic.List<string>([| "json"; "csv" |])))
+                let task: System.Threading.Tasks.Task<string[]> = openDialog.ShowAsync(this)
+                task.ContinueWith(fun (t: System.Threading.Tasks.Task<string[]>) ->
+                    let files: string[] = t.Result
+                    if files <> null && files.Length > 0 then
+                        showStatus (sprintf "Imported constraints: %s" files.[0]) Positive
+                        hideMainMenu ()) |> ignore)
+        | None -> ()
+
+        match startFreshButton with
+        | Some btn -> btn.Click.Add(fun _ -> hideMainMenu ())
+        | None -> ()
+
+        match feedbackButton with
+        | Some btn ->
+            btn.Click.Add(fun _ ->
+                let dialog = FeedbackWindow(currentVersionText())
+                dialog.Submitted.Add(fun payload ->
+                    Task.Run(fun () ->
+                        task {
+                            let! path, sent = Support.saveFeedback payload
+                            Dispatcher.UIThread.Post(fun () ->
+                                if sent then
+                                    showStatus "Rückmeldung wurde gesendet. Danke!" Positive
+                                else
+                                    showStatus "Rückmeldung gespeichert. Sie kann bei Bedarf weitergegeben werden." Neutral
+                                    if not (String.IsNullOrWhiteSpace(path)) then
+                                        Support.revealPath path)
+                        }
+                        :> Task)
+                    |> ignore)
+                dialog.ShowDialog(this) |> ignore)
+        | None -> ()
+
+        match mainMenuCloseButton with
+        | Some btn -> btn.Click.Add(fun _ -> hideMainMenu ())
+        | None -> ()
+
+        match quitButton with
+        | Some btn -> btn.Click.Add(fun _ -> this.Close())
+        | None -> ()
+
+        match dontShowOnStartupCheckBox with
+        | Some checkbox ->
+            checkbox.IsCheckedChanged.Add(fun _ ->
+                let prefFile = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData), "HolidayScheduler", "prefs.txt")
+                let prefDir = System.IO.Path.GetDirectoryName(prefFile)
+                if not (System.IO.Directory.Exists(prefDir)) then
+                    System.IO.Directory.CreateDirectory(prefDir) |> ignore
+                let isChecked = checkbox.IsChecked.HasValue && checkbox.IsChecked.Value
+                System.IO.File.WriteAllText(prefFile, if isChecked then "1" else "0"))
+        | None -> ()
+
+        this.Opened.Add(fun _ ->
+            Dispatcher.UIThread.Post((fun () -> showWhatsNewSummaryIfFirstStart ()), DispatcherPriority.Background))
+
+        attachRosterSelectionHandler ()
+        // --- Holiday Requests Panel Logic ---
+        do
+            let holidayRequestsSearchBox = this.FindControl<TextBox>("HolidayRequestsSearchBox")
+            let holidayRequestsListBox = this.FindControl<ListBox>("HolidayRequestsListBox")
+            let emptyRequestPopup = this.FindControl<Border>("EmptyRequestPopup")
+            let importRequestPopupButton = this.FindControl<Button>("ImportRequestPopupButton")
+            let uniqueNames: string[] = [| "Olivia"; "Liam"; "Emma"; "Noah"; "Ava"; "Sophia"; "Jackson"; "Isabella"; "Mason"; "Mia";
+                "Lucas"; "Charlotte"; "Ethan"; "Amelia"; "Logan"; "Harper"; "Elijah"; "Evelyn"; "James"; "Abigail";
+                "Benjamin"; "Emily"; "Alexander"; "Ella"; "William"; "Elizabeth"; "Michael"; "Avery"; "Daniel"; "Sofia";
+                "Matthew"; "Scarlett"; "Henry"; "Grace"; "Sebastian"; "Chloe"; "Jack"; "Victoria"; "Samuel"; "Aria";
+                "David"; "Lily"; "Joseph"; "Aubrey"; "Carter"; "Zoey"; "Owen"; "Penelope"; "Wyatt"; "Riley";
+                "John"; "Layla"; "Luke"; "Nora"; "Jayden"; "Camila"; "Dylan"; "Brooklyn"; "Levi"; "Bella";
+                "Isaac"; "Stella"; "Gabriel"; "Paisley"; "Julian"; "Ellie"; "Hudson"; "Anna"; "Grayson"; "Ariana";
+                "Lincoln"; "Audrey"; "Ezra"; "Lucy"; "Jaxon"; "Savannah"; "Leo"; "Caroline"; "Ryan"; "Nova";
+                "Nathan"; "Genesis"; "Caleb"; "Alice"; "Christian"; "Hailey"; "Hunter"; "Sadie"; "Joshua"; "Skylar";
+                "Thomas"; "Claire"; "Aaron"; "Gabriella"; "Eli"; "Violet"; "Isaiah"; "Maya"; "Charles"; "Serenity";
+                "Christopher"; "Autumn"; "Andrew"; "Quinn"; "Josiah"; "Piper"; "Adrian"; "Alexa"; "Jonathan"; "Aaliyah";
+                "Easton"; "Julia"; "Colton"; "Taylor"; "Jordan"; "Kennedy"; "Brayden"; "Alice"; "Nicholas"; "Madelyn";
+                "Robert"; "Cora"; "Angel"; "Ruby"; "Dominic"; "Eva"; "Austin"; "Naomi"; "Adam"; "Clara";
+                "Jace"; "Vivian"; "Gavin"; "Reagan"; "Connor"; "Elena"; "Parker"; "Sarah"; "Xavier"; "Delilah";
+                "Jose"; "Mackenzie"; "Cooper"; "Katherine"; "Bentley"; "Alyssa"; "Roman"; "Brielle"; "Max"; "Josephine";
+                "Axel"; "Lydia"; "Greyson"; "Adeline"; "Miles"; "Emilia"; "Blake"; "Vivienne"; "Zachary"; "Madeline";
+                "Micah"; "Peyton"; "Kayden"; "Melanie"; "Nathaniel"; "Isabelle"; "Elias"; "Eliza"; "Theo"; "Molly";
+                "Asher"; "Margaret"; "Kingston"; "Sophie"; "Weston"; "Faith"; "Jason"; "Laila"; "Chase"; "Jasmine";
+                "Sawyer"; "Adalyn"; "Kaiden"; "Arianna"; "Juan"; "Morgan"; "Tyler"; "Bailey"; "Brandon"; "Andrea";
+                "Justin"; "Emery"; "Luis"; "Kinsley"; "Camden"; "Valentina"; "Declan"; "Willow"; "Braxton"; "Athena";
+                "Kevin"; "Maria"; "Ivan"; "Norah"; "Carlos"; "Jocelyn"; "Ayden"; "Luna"; "Brantley"; "Mya";
+                "Jax"; "Ariel"; "Maddox"; "Brooklynn"; "Emmett"; "Alina"; "Ryder"; "Leah"; "Finn"; "Juliana";
+                "Diego"; "Kayla"; "Kaleb"; "Rose"; "Alex"; "Isabel"; "Bryson"; "Harmony"; "Myles"; "Eden";
+                "Malachi"; "Sienna"; "Giovanni"; "Lilly"; "Brody"; "Miriam"; "Harrison"; "Aubree"; "Milo"; "Daisy" |]
+            let allNames: System.Collections.Generic.List<string> = new System.Collections.Generic.List<string>(uniqueNames)
+            let filteredNames: System.Collections.ObjectModel.ObservableCollection<string> = new System.Collections.ObjectModel.ObservableCollection<string>(allNames)
+            if not (isNull holidayRequestsListBox) then
+                holidayRequestsListBox.ItemsSource <- filteredNames
+
+            let updateEmptyRequestPopup () =
+                if not (isNull emptyRequestPopup) then
+                    emptyRequestPopup.IsVisible <- filteredNames.Count = 0
+
+            updateEmptyRequestPopup ()
+
+            if not (isNull importRequestPopupButton) then
+                importRequestPopupButton.Click.Add(fun _ ->
+                    let openDialog = OpenFileDialog()
+                    openDialog.Title <- "Import Request File"
+                    openDialog.AllowMultiple <- false
+                    openDialog.Filters.Add(FileDialogFilter(Name = "Request Files", Extensions = new System.Collections.Generic.List<string>([| "json"; "csv" |])))
+                    let task: System.Threading.Tasks.Task<string[]> = openDialog.ShowAsync(this)
+                    task.ContinueWith(fun (t: System.Threading.Tasks.Task<string[]>) ->
+                        let files: string[] = t.Result
+                        if files <> null && files.Length > 0 then
+                            emptyRequestPopup.IsVisible <- false
+                            showStatus (sprintf "Imported requests: %s" files.[0]) Positive) |> ignore)
+
+            if not (isNull holidayRequestsSearchBox) then
+                holidayRequestsSearchBox.TextChanged.Add(fun _ ->
+                    let query = holidayRequestsSearchBox.Text.Trim().ToLowerInvariant()
+                    filteredNames.Clear()
+                    for i = 0 to allNames.Count - 1 do
+                        let name = allNames.[i]
+                        if name.ToLowerInvariant().Contains(query) then
+                            filteredNames.Add(name)
+                    updateEmptyRequestPopup ())
+
+        // Removed duplicate initialization for holiday requests panel logic
+        // (Removed duplicate and erroneous top-level bindings)
+
+        // Wire up FeedbackChatButton to open feedback dialog or show placeholder
+        let feedbackChatButton = this.FindControl<Button>("FeedbackChatButton")
+        if not (isNull feedbackChatButton) then
+            feedbackChatButton.Click.Add(fun _ ->
+                // Placeholder: Show simple feedback dialog
+                let dialog = Window()
+                dialog.Title <- "Send Feedback"
+                dialog.Width <- 420.0
+                dialog.Height <- 320.0
+                dialog.CanResize <- false
+                dialog.WindowStartupLocation <- WindowStartupLocation.CenterOwner
+                dialog.Background <- SolidColorBrush(Color.Parse("#EEF3FB"))
+                dialog.SystemDecorations <- SystemDecorations.Full
+
+                let rootBorder = Border()
+                rootBorder.Margin <- Avalonia.Thickness(14.0)
+                rootBorder.Padding <- Avalonia.Thickness(16.0)
+                rootBorder.Background <- SolidColorBrush(Color.Parse("#F8FAFF"))
+                rootBorder.BorderBrush <- SolidColorBrush(Color.Parse("#9CB2D8"))
+                rootBorder.BorderThickness <- Avalonia.Thickness(1.0)
+                rootBorder.CornerRadius <- Avalonia.CornerRadius(10.0)
+
+                let root = StackPanel()
+                root.Spacing <- 10.0
+
+                let titleBlock = TextBlock()
+                titleBlock.Text <- "Send us your feedback!"
+                titleBlock.FontSize <- 18.0
+                titleBlock.FontWeight <- FontWeight.SemiBold
+                titleBlock.Foreground <- SolidColorBrush(Color.Parse("#142746"))
+
+                let message = TextBox()
+                message.AcceptsReturn <- true
+                message.Height <- 120.0
+                message.TextWrapping <- TextWrapping.Wrap
+                message.FontSize <- 14.0
+                message.Margin <- Avalonia.Thickness(0.0, 2.0, 0.0, 10.0)
+                message.Foreground <- SolidColorBrush(Color.Parse("#243957"))
+                message.Watermark <- "Type your feedback here..."
+
+                let sendButton = Button()
+                sendButton.Content <- "Send"
+                sendButton.Width <- 120.0
+                sendButton.HorizontalAlignment <- Avalonia.Layout.HorizontalAlignment.Left
+                sendButton.Background <- SolidColorBrush(Color.Parse("#2F4D7A"))
+                sendButton.Foreground <- Brushes.White
+                sendButton.Click.Add(fun _ ->
+                    dialog.Close()
+                    showStatus "Feedback sent! Thank you." Positive)
+
+                root.Children.Add(titleBlock)
+                root.Children.Add(message)
+                root.Children.Add(sendButton)
+                rootBorder.Child <- root
+                dialog.Content <- rootBorder
+                dialog.ShowDialog(this) |> ignore)
